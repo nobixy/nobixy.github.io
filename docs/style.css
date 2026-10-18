@@ -391,12 +391,22 @@ html.page-leaving::after { content: ''; position: fixed; inset: 0; z-index: 180;
 .feed-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px; background: var(--chrome); box-shadow: var(--raised); font: 13px var(--chrome-font); }
 .feed-url { flex: 1 1 240px; padding: 4px 6px; background: #fff; box-shadow: var(--sunken); font: 14px var(--mono); overflow-wrap: anywhere; user-select: all; }
 
-/* ---------------------------------------------------------------- welcome photo: a Polaroid taped to the page */
-.polaroid { position: relative; align-self: start; justify-self: center; width: 200px; margin: 6px 6px 0; padding: 12px 12px 0; border: 0; background: #fdfdf8; box-shadow: 0 1px 2px #0003, 4px 6px 12px #0003; transform: rotate(2.5deg); transition: transform .8s steps(4); }
-.polaroid:hover { transform: rotate(-1deg) scale(1.03); }
-.polaroid img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; filter: sepia(.12) saturate(1.1) contrast(1.02); box-shadow: inset 0 0 0 1px #0002; }
-.polaroid figcaption { padding: 14px 0 18px; color: #2a2a5a; font: 22px/1 "Comic Sans MS", "Comic Neue", "Chalkboard SE", "Segoe Print", cursive; text-align: center; transform: rotate(-2deg); }
-.polaroid .tape { position: absolute; top: -12px; left: 50%; width: 84px; height: 26px; margin-left: -42px; background: #fff7b0cc; box-shadow: 0 1px 2px #0002; transform: rotate(-4deg); }
+/* ---------------------------------------------------------------- welcome photo: a little Win95 image viewer */
+.photo-window { align-self: start; justify-self: center; display: block; width: 222px; margin: 0; padding: 3px; border: 0; background: var(--chrome); box-shadow: var(--raised), 6px 6px 0 #f6a9cc, 6px 6px 0 1px #d9779f; }
+.pw-title { display: flex; align-items: center; gap: 5px; padding: 2px 2px 2px 3px; background: linear-gradient(90deg, var(--navy), var(--title-end)); color: #fff; font: bold 11px/16px var(--chrome-font); }
+.pw-icon { flex: none; width: 14px; height: 12px; border: 1px solid #fff; background: linear-gradient(160deg, #7ec8ff 0 45%, #3a9a4a 46% 70%, #ffd400 71%); }
+.pw-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pw-buttons { display: flex; gap: 2px; }
+.pw-buttons b { display: grid; place-items: center; width: 15px; height: 13px; background: var(--chrome); box-shadow: var(--raised); color: #000; font: bold 9px/1 var(--chrome-font); }
+.pw-buttons b:last-child { margin-left: 2px; }
+.pw-menu { display: flex; gap: 2px; padding: 2px 1px; color: #000; font: 11px/1.4 var(--chrome-font); }
+.pw-menu span { padding: 0 5px; }
+.pw-frame { padding: 6px; background: #808080; box-shadow: var(--sunken); }
+.pw-frame img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border: 1px solid #000; image-rendering: auto; }
+.pw-status { display: flex; justify-content: space-between; gap: 4px; margin-top: 3px; color: #000; font: 11px/1.5 var(--chrome-font); }
+.pw-status span { padding: 0 5px; box-shadow: inset 1px 1px var(--chrome-shadow), inset -1px -1px #fff; white-space: nowrap; }
+.pw-status span:first-child { flex: 1; font-weight: bold; color: var(--navy); }
+.photo-window:hover .pw-frame img { filter: saturate(1.15) contrast(1.05); }
 @media (max-width: 690px) {
-  .welcome-content .polaroid { display: block; width: 180px; order: -1; margin: 10px auto 6px; }
+  .welcome-content .photo-window { display: block; width: 200px; order: -1; margin: 4px auto 10px; }
 }

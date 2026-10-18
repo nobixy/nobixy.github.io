@@ -233,7 +233,12 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     <p class="headline">{esc(profile["headline"])}</p>
     <p>{esc(profile["summary"])}</p>
     <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
-  </div><figure class="welcome-art polaroid"><span class="tape" aria-hidden="true"></span><img src="/avatar.jpg" width="200" height="200" alt="Photo of {esc(profile["name"])}"><figcaption>that's me! ♥</figcaption></figure></div>
+  </div><figure class="welcome-art photo-window">
+    <div class="pw-title" aria-hidden="true"><span class="pw-icon"></span><span class="pw-name">ME.JPG - Image Viewer</span><span class="pw-buttons"><b>_</b><b>□</b><b>×</b></span></div>
+    <div class="pw-menu" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>V</u>iew</span><span><u>H</u>elp</span></div>
+    <div class="pw-frame"><img src="/avatar.jpg" width="200" height="200" alt="Photo of {esc(profile["name"])}"></div>
+    <figcaption class="pw-status"><span>✦ that's me!</span><span aria-hidden="true">400x400 · 24-bit</span></figcaption>
+  </figure></div>
 </section>
 <div class="home-columns"><div class="content-main">
 <section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>UPDATE LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">✳</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
