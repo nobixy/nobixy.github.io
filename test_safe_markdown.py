@@ -28,4 +28,13 @@ class SafeMarkdownTests(unittest.TestCase):
         self.assertNotIn("src=", render('![bad](data:image/svg+xml;base64,xxx)'))
 
 
+    def test_us_dates_and_ascii_punctuation(self):
+        self.assertEqual(build.us_date("2026-10-18"), "10/18/26")
+        self.assertEqual(build.us_date("not a date"), "not a date")
+        self.assertEqual(build.ascii_punct("It\u2019s \u201cdone\u201d \u2014 Oct\u2013Nov\u2026"), 'It\'s "done" -- Oct-Nov...')
+
+    def test_smart_quotes_are_off(self):
+        self.assertIn("It's", render("It's \"plain\""))
+        self.assertNotIn("&rsquo;", render("It's"))
+
 if __name__ == "__main__": unittest.main()
