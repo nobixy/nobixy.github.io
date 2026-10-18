@@ -233,7 +233,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     <p class="headline">{esc(profile["headline"])}</p>
     <p>{esc(profile["summary"])}</p>
     <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
-  </div><div class="welcome-art" aria-hidden="true"><div class="pixel-monitor"><div class="monitor-screen"><span>^_^</span><small>HELLO, WEB!</small></div><div class="monitor-stand"></div></div><span class="art-caption">✦ CURRENTLY BUILDING A LIFE IN TECH ✦</span></div></div>
+  </div><figure class="welcome-art photo-window"><div class="photo-title" aria-hidden="true"><span>ME.JPG</span><span class="tb-buttons"><b>×</b></span></div><img src="/avatar.jpg" width="200" height="200" alt="Photo of {esc(profile["name"])}"><figcaption>✦ that's me! ✦</figcaption></figure></div>
 </section>
 <div class="home-columns"><div class="content-main">
 <section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>UPDATE LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">✳</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
@@ -331,6 +331,7 @@ def build() -> None:
     shutil.copy(ROOT / "style.css", OUT / "style.css")
     shutil.copy(ROOT / "site.js", OUT / "site.js")
     shutil.copy(ROOT / "grain.svg", OUT / "grain.svg")
+    shutil.copy(ROOT / "avatar.jpg", OUT / "avatar.jpg")
     write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
     intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
     writing_body = f'''<section class="page-heading"><p class="eyebrow">HOME / WRITING / THE ARCHIVE</p><h1>Things I put <em>into words.</em><span aria-hidden="true">✳</span></h1><p>Study notes, short stories, and thoughts in progress. This is where they land.</p></section>

@@ -390,3 +390,12 @@ html.page-leaving::after { content: ''; position: fixed; inset: 0; z-index: 180;
 .lost { margin: 0; color: #5a4a7a; font: bold 13px var(--mono); text-align: center; }
 .feed-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px; background: var(--chrome); box-shadow: var(--raised); font: 13px var(--chrome-font); }
 .feed-url { flex: 1 1 240px; padding: 4px 6px; background: #fff; box-shadow: var(--sunken); font: 14px var(--mono); overflow-wrap: anywhere; user-select: all; }
+
+/* ---------------------------------------------------------------- welcome photo */
+.photo-window { align-self: start; justify-content: flex-start; gap: 0; margin: 0; padding: 3px; border: 0; background: var(--chrome); box-shadow: var(--raised), 4px 4px 0 #f6a9cc; }
+.photo-title { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 2px 2px 2px 6px; background: linear-gradient(90deg, var(--navy), var(--title-end)); color: #fff; font: bold 12px var(--chrome-font); }
+.photo-window img { display: block; width: 100%; height: auto; aspect-ratio: 1; margin-top: 3px; object-fit: cover; box-shadow: var(--sunken); padding: 2px; background: #fff; }
+.photo-window figcaption { padding: 5px 0 2px; color: #303050; font: bold 12px var(--mono); text-align: center; }
+@media (max-width: 690px) {
+  .welcome-content .photo-window { display: flex; width: 170px; order: -1; }
+}
