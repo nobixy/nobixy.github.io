@@ -31,41 +31,5 @@
     "repo": "nobixy/nobixy.github.io",
     "discussion": 1,
     "hide": []
-  },
-  "welcome": {
-    "intro": "I'm teaching myself electrical engineering and computer science from the ground up, while working full time. This homepage is where I show the work.",
-    "building": [
-      [
-        "A software engineering job",
-        "the first real milestone, and the one I'm aiming at now."
-      ],
-      [
-        "A full EECS education",
-        "the equivalent of MIT's 6-3 degree plus a master's: 54 courses and roughly 6,600 hours, from arithmetic and grammar up through systems, hardware and a capstone."
-      ],
-      [
-        "The habit of finishing",
-        "one lesson, one page and one project at a time."
-      ]
-    ],
-    "whys": [
-      [
-        "I want to finish something.",
-        "I've always been drawn to programming, but I never followed through. I've never finished anything I started, and that eats at me. This is the one I finish."
-      ],
-      [
-        "I want to stop feeling like the \"dumb\" one.",
-        "I couldn't hear until I was six and was in speech therapy until 8th grade. I never really learned to spell, so I stayed away from writing. Now I study the basics again and write every day, in public."
-      ],
-      [
-        "I have more to give.",
-        "I spent years in fast food and package handling. I'm good at running a shift, but I've had gas in the tank I wasn't using. With AI moving this fast, I want to be someone who builds the future, not someone it replaces."
-      ],
-      [
-        "Purpose fuels me.",
-        "When my energy has nowhere to go, it turns into beating myself up. When it goes into something bigger, it comes back."
-      ]
-    ],
-    "quote": "If my fuel goes to my purpose, then my purpose is going to fill my fuel."
   }
 }

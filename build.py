@@ -215,20 +215,7 @@ def post_list(posts: list[dict], limit: int | None = None) -> str:
         for i, p in enumerate(items, 1)) + "</ul>"
 
 
-def welcome_story(w: dict, profile: dict) -> str:
-    """What I'm building toward and why, from site.json. Falls back to the resume summary."""
-    if not w:
-        return f'<p>{esc(profile["summary"])}</p>'
-    building = "".join(f'<li><strong>{esc(a)}:</strong> {esc(b)}</li>' for a, b in w.get("building", []))
-    whys = "".join(f'<li><strong>{esc(a)}</strong> {esc(b)}</li>' for a, b in w.get("whys", []))
-    quote = f'<blockquote class="why-quote"><p>“{esc(w["quote"])}”</p><cite>me, writing on <a href="/how-will-it-feel-when-i-reach-it/">How Will It Feel When I Reach It?</a></cite></blockquote>' if w.get("quote") else ""
-    return (f'<p class="welcome-intro">{esc(w.get("intro", ""))}</p>'
-            f'<div class="story-boxes"><section class="story-box building-box"><h2><span aria-hidden="true">★</span> What I\'m building toward</h2><ul>{building}</ul></section>'
-            f'<section class="story-box why-box"><h2><span aria-hidden="true">♥</span> Why I\'m doing this</h2><ol>{whys}</ol></section></div>{quote}')
-
-
-def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> str:
-    settings = settings or {}
+def resume_html(data: dict, posts: list[dict]) -> str:
     profile, learning = data["profile"], data.get("learning") or {}
     links = "".join(
         f'<a href="{esc(link["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(link["label"])} ↗</a>'
@@ -245,7 +232,7 @@ def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> 
   <div class="welcome-content"><div class="welcome-copy"><p class="welcome-label">HI THERE! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
     <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
     <p class="headline">{esc(profile["headline"])}</p>
-    {welcome_story(settings.get("welcome") or {}, profile)}
+    <p>{esc(profile["summary"])}</p>
     <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
   </div><div class="welcome-art" aria-hidden="true"><div class="pixel-monitor"><div class="monitor-screen"><span>^_^</span><small>HELLO, WEB!</small></div><div class="monitor-stand"></div></div><span class="art-caption">✦ CURRENTLY BUILDING A LIFE IN TECH ✦</span></div></div>
 </section>
@@ -274,7 +261,7 @@ def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> 
         + ("<ul>" + "".join(f"<li>{esc(bullet)}</li>" for bullet in job["bullets"]) + "</ul>" if job.get("bullets") else "")
         + "</div>" for job in profile.get("experience", [])
     )
-    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>04 // WORK HISTORY</span><span>EXPERIENCE</span></div><div class="panel-body"><h2>Experience <span aria-hidden="true">✳</span></h2><p class="exp-summary">{esc(profile["summary"])}</p><div class="jobs">{jobs}</div></div></section>')
+    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>04 // WORK HISTORY</span><span>EXPERIENCE</span></div><div class="panel-body"><h2>Experience <span aria-hidden="true">✳</span></h2><div class="jobs">{jobs}</div></div></section>')
     out.append('</div><aside class="content-rail" aria-label="More about Joseph">')
 
     if posts:
@@ -377,7 +364,7 @@ def build() -> None:
     shutil.copy(ROOT / "style.css", OUT / "style.css")
     shutil.copy(ROOT / "site.js", OUT / "site.js")
     shutil.copy(ROOT / "grain.svg", OUT / "grain.svg")
-    write("index.html", page(data["profile"]["name"], resume_html(data, posts, settings), data, page_class="home-page", posts=posts))
+    write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
     intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
     writing_body = f'''<section class="page-heading"><p class="eyebrow">HOME / WRITING / THE ARCHIVE</p><h1>Things I put <em>into words.</em><span aria-hidden="true">✳</span></h1><p>Study notes, short stories, and thoughts in progress. This is where they land.</p></section>
 <section class="panel archive-panel"><div class="panel-top"><span>OPEN FOLDER / WRITING</span><span>{len(posts):02d} FILES</span></div><div class="panel-body"><div class="archive-intro">{intro}</div>{post_list(posts)}</div></section>'''
