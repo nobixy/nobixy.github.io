@@ -74,23 +74,4 @@
     html.classList.remove('page-leaving');
     if (event.persisted) { html.classList.remove('dialing-in'); say('Document: Done'); }
   });
-
-  // A sparkle cursor trail. Mouse only, never on touch.
-  let lastSparkle = 0, sparkles = 0;
-  const shapes = ['*', '+', '.', 'x', 'o'];
-  document.addEventListener('pointermove', (event) => {
-    if (event.pointerType !== 'mouse' || still()) return;
-    const now = performance.now();
-    if (now - lastSparkle < 55 || sparkles > 24) return;
-    lastSparkle = now;
-    const s = document.createElement('span');
-    s.className = 'sparkle';
-    s.setAttribute('aria-hidden', 'true');
-    s.textContent = shapes[Math.floor(Math.random() * shapes.length)];
-    s.style.left = `${event.clientX + 6}px`;
-    s.style.top = `${event.clientY + 6}px`;
-    document.body.appendChild(s);
-    sparkles += 1;
-    s.addEventListener('animationend', () => { s.remove(); sparkles -= 1; });
-  }, { passive: true });
 })();

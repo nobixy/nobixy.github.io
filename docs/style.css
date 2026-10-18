@@ -92,7 +92,6 @@ header.site { display: flex; align-items: center; justify-content: space-between
 .brand-spark { display: inline-block; color: #ff9933; font-size: 30px; text-shadow: 2px 2px 0 #ffffff; animation: spin-star 6s steps(8) infinite; }
 .brand-spark:last-child { animation-direction: reverse; }
 header.site p { margin: 6px 0 4px; color: #00ff00; font: bold 14px var(--mono); text-shadow: 0 0 4px #00ff0099; }
-header.site p::after { content: "_"; animation: blink 1.4s steps(1) infinite; }
 header.site p span { color: #00ff00; }
 .header-badges { display: flex; align-items: flex-end; flex-direction: column; gap: 5px; }
 .header-badges span { padding: 2px 8px; border: 2px outset #ccccff; background: #ffffff; color: #336699; font: bold 11px/1.4 var(--mono); }
@@ -284,9 +283,6 @@ footer.site p { margin: 0; }
 .blink { animation: blink 1.6s steps(1) infinite; }
 
 /* ---------------------------------------------------------------- 90s extras */
-.sparkle { position: fixed; z-index: 250; pointer-events: none; color: #00ff00; font: 14px/1 var(--chrome-font); text-shadow: 0 0 3px #ffffff; animation: sparkle-fall 1.4s steps(7) forwards; }
-.sparkle:nth-child(3n) { color: #ffcc00; }
-.sparkle:nth-child(3n+1) { color: #66ccff; }
 html.page-leaving .throbber i, html.dialing-in .throbber i { animation: meteor 1.2s steps(6) infinite; }
 html.page-leaving .throbber i:nth-of-type(2), html.dialing-in .throbber i:nth-of-type(2) { animation-delay: .4s; }
 html.page-leaving .throbber i:nth-of-type(3), html.dialing-in .throbber i:nth-of-type(3) { animation-delay: .8s; }
@@ -305,7 +301,6 @@ html.page-leaving::after { content: ''; position: fixed; inset: 0; z-index: 180;
 @keyframes roll { from { transform: translateY(-60%); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fill-in { from { width: 0; } }
 @keyframes meteor { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(-36px, 36px); } }
-@keyframes sparkle-fall { from { opacity: 1; transform: translate(0, 0) scale(1); } to { opacity: 0; transform: translate(0, 26px) scale(.4) rotate(180deg); } }
 
 /* ---------------------------------------------------------------- smaller screens */
 @media (max-width: 930px) {
@@ -359,8 +354,7 @@ html.page-leaving::after { content: ''; position: fixed; inset: 0; z-index: 180;
   .marquee-track, .mq { width: auto; flex-wrap: wrap; }
   .mq + .mq { display: none; }
   html.page-leaving::after { content: none; }
-  .sparkle { display: none; }
-}
+  }
 
 /* ---------------------------------------------------------------- 404 dialog and feed page */
 .error-desk { display: grid; place-items: center; gap: 18px; min-height: 420px; padding: 30px 10px; }
