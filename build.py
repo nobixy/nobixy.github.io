@@ -60,11 +60,39 @@ def load_posts() -> list[dict]:
     return posts
 
 
-def page(title: str, body: str, data: dict, *, description: str = "", path: str = "/", page_class: str = "") -> str:
+REPO_URL = "https://github.com/nobixy/nobixy.github.io"
+
+
+def badges() -> str:
+    """88x31 buttons, drawn in CSS. Each one is true and the linked ones go somewhere real."""
+    items = (
+        ("b-arch", "ARCH", "LINUX USER", "https://archlinux.org/"),
+        ("b-py", "PYTHON", "POWERED", "https://www.python.org/"),
+        ("b-src", "VIEW", "SOURCE", REPO_URL),
+        ("b-rss", "RSS", "XML FEED", "/feed.xml"),
+        ("b-noads", "NO ADS", "NO TRACKING", ""),
+        ("b-800", "BEST AT", "800 x 600", ""),
+    )
+    out = []
+    for cls, top, bottom, href in items:
+        inner = f'<span>{top}</span><small>{bottom}</small>'
+        out.append(f'<a class="b88 {cls}" href="{href}"{" target=\"_blank\" rel=\"noopener noreferrer\"" if href.startswith("http") else ""}>{inner}</a>'
+                   if href else f'<span class="b88 {cls}">{inner}</span>')
+    return "".join(out)
+
+
+def odometer(n: int, digits: int = 6) -> str:
+    s = str(max(0, n)).zfill(digits)
+    return f'<span class="odometer" role="img" aria-label="{n}">' + "".join(f"<b>{d}</b>" for d in s) + "</span>"
+
+
+def page(title: str, body: str, data: dict, *, description: str = "", path: str = "/", page_class: str = "",
+         posts: list | None = None) -> str:
     name = data["profile"]["name"]
     full = title if title == name else f"{title} · {name}"
     desc = description or data["profile"].get("headline", "")
     home = "" if path == "/" else "/"
+    posts = posts or []
     menu_items = (
         ("/", "⌂", "Home"),
         (f"{home}#hello", "◆", "About me"),
@@ -91,51 +119,77 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
         for link in data["profile"].get("links", [])
     )
     updated = esc(data.get("updated", ""))
-    subjects = " <span>+</span> ".join(esc(course["name"]) for course in data.get("learning", {}).get("open", []))
+    learning = data.get("learning", {})
+    subjects = " <span>+</span> ".join(esc(course["name"]) for course in learning.get("open", []))
     reading_meter = '<div class="reading-meter" aria-hidden="true"><span></span></div>' if page_class == "article-page" else ""
+    news = ["Welcome to my homepage! Thanks for stopping by.",
+            f"Now studying: {', '.join(c['name'] for c in learning.get('open', [])) or 'the basics'}."]
+    news += [f"NEW WRITING: {p['title']}" for p in posts[:3]]
+    news.append(f"Last updated {data.get('updated', '')}.")
+    ticker = "".join(f"<span>{esc(n)}</span><i aria-hidden=\"true\">✦</i>" for n in news)
+    url = f"{SITE_URL}{path}"
     return f"""<!doctype html>
-<html lang="en">
+<html lang="en" class="dialing-in">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(full)}</title>
 <meta name="description" content="{esc(desc)}">
-<link rel="canonical" href="{SITE_URL}{path}">
+<link rel="canonical" href="{url}">
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(desc)}">
-<meta property="og:url" content="{SITE_URL}{path}">
+<meta property="og:url" content="{url}">
 <meta name="twitter:card" content="summary">
-<meta name="theme-color" content="#e8f1fb">
+<meta name="theme-color" content="#000080">
 <link rel="alternate" type="application/rss+xml" title="{esc(name)}: writing" href="/feed.xml">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%2324366e%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffd3e3%22/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000080%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffff00%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css?v={STYLE_VERSION}">
 <script src="/site.js?v={SCRIPT_VERSION}" defer></script>
+<noscript><style>html.dialing-in main {{ animation: none; }}</style></noscript>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 {reading_meter}
 <div class="grain" aria-hidden="true"></div>
-<div class="site-shell" id="top">
-<div class="utility-bar"><span>☆ WELCOME TO MY LITTLE CORNER OF THE INTERNET ☆</span><span>LAST UPDATED: {updated}</span></div>
+<div class="browser site-shell" id="top">
+<div class="titlebar"><span class="tb-logo" aria-hidden="true">N</span><span class="tb-title">{esc(full)} - Netscape</span><span class="tb-buttons" aria-hidden="true"><b>_</b><b>□</b><b>×</b></span></div>
+<div class="menubar" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>V</u>iew</span><span><u>G</u>o</span><span><u>B</u>ookmarks</span><span><u>O</u>ptions</span><span><u>D</u>irectory</span><span><u>W</u>indow</span><span class="mb-help"><u>H</u>elp</span></div>
+<div class="toolbar">
+  <nav class="tb-nav" aria-label="Browser buttons">
+    <button type="button" class="tbtn" data-browser="back"><span aria-hidden="true">◀</span>Back</button>
+    <button type="button" class="tbtn" data-browser="forward"><span aria-hidden="true">▶</span>Forward</button>
+    <a class="tbtn" href="/"><span aria-hidden="true">⌂</span>Home</a>
+    <a class="tbtn" href="{path}"><span aria-hidden="true">↻</span>Reload</a>
+    <a class="tbtn" href="/writing/"><span aria-hidden="true">✎</span>Writing</a>
+    <a class="tbtn" href="{REPO_URL}" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">≡</span>Source</a>
+  </nav>
+  <div class="throbber" aria-hidden="true"><span>N</span><i></i><i></i><i></i></div>
+</div>
+<div class="locationbar"><span class="loc-label">Location:</span><span class="loc-field">{esc(url)}</span></div>
+<div class="viewport">
 <header class="site">
   <div class="header-identity">
   <div class="brand-line"><span class="brand-spark" aria-hidden="true">✦</span><a class="brand" href="/" aria-label="{esc(name)} home">NOBIXY<span>'S ROOM</span></a><span class="brand-spark" aria-hidden="true">✦</span></div>
   <p>the personal homepage of {esc(name)} <span aria-hidden="true">✳</span> learning, making, writing</p>
   </div>
-  <div class="header-badges" aria-label="Site badges"><span>EST. 2026</span><span>TEXT FIRST</span><span>ALWAYS UNDER CONSTRUCTION</span></div>
+  <div class="header-badges" aria-label="Site badges"><span>EST. 2026</span><span>TEXT FIRST</span><span class="blink">ALWAYS UNDER CONSTRUCTION</span></div>
 </header>
+<div class="construction" aria-hidden="true"><span>⚠ UNDER CONSTRUCTION ⚠ PARDON MY DUST ⚠ NEW STUFF EVERY WEEK ⚠</span></div>
+<div class="marquee" role="marquee" aria-label="Site news"><div class="marquee-track"><div class="mq">{ticker}</div><div class="mq" aria-hidden="true">{ticker}</div></div></div>
 <div class="site-layout">
 <aside class="sidebar" aria-label="Site directory">
   <nav class="side-box side-nav" aria-label="Main navigation"><h2>★ MENU / INDEX</h2><ul class="menu-list">{menu}</ul></nav>
-  <section class="side-box status-box"><h2>★ NOW / STATUS</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress →</a></section>
-  <div class="web-stamps" aria-label="Web badges"><span>NO ADS</span><span>RSS READY</span><span>BEST VIEWED CURIOUS</span></div>
+  <section class="side-box status-box"><h2>★ NOW / STATUS</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">LESSONS COMPLETED</p>{odometer(int(learning.get("done", 0)))}<p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress →</a></section>
+  <div class="web-stamps" aria-label="Web badges">{badges()}</div>
   <a class="back-top" href="#top">↑ BACK TO TOP</a>
 </aside>
 <main id="main" class="{page_class}">
 {body}
 </main>
 </div>
-<footer class="site"><p>✳ Thanks for visiting {esc(name)}'s homepage. Come back soon!</p><p>LAST SYNC: {updated} &nbsp; / &nbsp; <a href="/">HOME</a> &nbsp; / &nbsp; <a href="/writing/">WRITING</a> &nbsp; / &nbsp; <a href="#top">↑ TOP</a></p></footer>
+<footer class="site"><p>✳ Thanks for visiting {esc(name)}'s homepage. Come back soon!</p><p class="footer-best">Best viewed with Netscape Navigator 3.0 at 800 x 600 · Made on a Linux box</p><p>LAST SYNC: {updated} &nbsp; / &nbsp; <a href="/">HOME</a> &nbsp; / &nbsp; <a href="/writing/">WRITING</a> &nbsp; / &nbsp; <a href="#top">↑ TOP</a></p></footer>
+</div>
+<div class="statusbar" role="status"><span class="sb-lock" aria-hidden="true">⚿</span><span class="sb-text" id="sb-text">Document: Done</span><span class="sb-meter" aria-hidden="true"><span></span></span><span class="sb-zone">Last updated {updated}</span></div>
 </div>
 </body>
 </html>
@@ -151,9 +205,10 @@ def post_list(posts: list[dict], limit: int | None = None) -> str:
     items = posts[:limit] if limit else posts
     if not items:
         return '<p class="muted">First posts are on the way.</p>'
+    newest = max((p["date"] for p in items), default=None)
     return '<ul class="posts">' + "".join(
         f'<li><a class="post-link" href="/{p["slug"]}/"><span class="post-number">{i:02d}</span>'
-        f'<span class="post-copy"><strong>{esc(p["title"])}</strong>'
+        f'<span class="post-copy"><strong>{esc(p["title"])}{" <em class=\"new-tag blink\">NEW!</em>" if p["date"] == newest else ""}</strong>'
         + (f'<span>{esc(p["description"])}</span>' if p["description"] else "")
         + f'</span><span class="post-side"><time datetime="{p["date"]}">{p["date"]:%b} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">↗</span></span></a></li>'
         for i, p in enumerate(items, 1)) + "</ul>"
@@ -180,7 +235,6 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
   </div><div class="welcome-art" aria-hidden="true"><div class="pixel-monitor"><div class="monitor-screen"><span>^_^</span><small>HELLO, WEB!</small></div><div class="monitor-stand"></div></div><span class="art-caption">✦ CURRENTLY BUILDING A LIFE IN TECH ✦</span></div></div>
 </section>
-<div class="notice-strip"><strong>NEWS FLASH!</strong><span>Learning in public, one lesson and one page at a time.</span><span>✿ ✿ ✿</span></div>
 <div class="home-columns"><div class="content-main">
 <section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>UPDATE LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">✳</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
 
@@ -210,7 +264,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     out.append('</div><aside class="content-rail" aria-label="More about Joseph">')
 
     if posts:
-        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>THE NOTEBOOK</span><span>NEW!</span></div><div class="panel-body"><h2>Recent writing</h2>{post_list(posts, 3)}<a class="text-link" href="/writing/">→ ALL POSTS</a></div></section>')
+        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>THE NOTEBOOK</span><span class="blink">NEW!</span></div><div class="panel-body"><h2>Recent writing</h2>{post_list(posts, 3)}<a class="text-link" href="/writing/">→ ALL POSTS</a></div></section>')
 
     skills = "".join(f'<div><dt>{esc(skill["label"])}</dt><dd>{esc(skill["text"])}</dd></div>' for skill in profile.get("skills", []))
     out.append(f'<section class="panel skills-panel"><div class="section-bar"><span>TOOLBOX.TXT</span><span>✱</span></div><div class="panel-body"><h2>What I know</h2><dl class="skills">{skills}</dl></div></section>')
@@ -255,20 +309,24 @@ def build() -> None:
     shutil.copy(ROOT / "style.css", OUT / "style.css")
     shutil.copy(ROOT / "site.js", OUT / "site.js")
     shutil.copy(ROOT / "grain.svg", OUT / "grain.svg")
-    write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page"))
+    write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
     intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
     writing_body = f'''<section class="page-heading"><p class="eyebrow">HOME / WRITING / THE ARCHIVE</p><h1>Things I put <em>into words.</em><span aria-hidden="true">✳</span></h1><p>Study notes, short stories, and thoughts in progress. This is where they land.</p></section>
 <section class="panel archive-panel"><div class="panel-top"><span>OPEN FOLDER / WRITING</span><span>{len(posts):02d} FILES</span></div><div class="panel-body"><div class="archive-intro">{intro}</div>{post_list(posts)}</div></section>'''
     write("writing/index.html", page("Writing", writing_body, data, path="/writing/", page_class="archive-page",
-                                     description="What I'm learning, written up."))
-    for p in posts:
+                                     description="What I'm learning, written up.", posts=posts))
+    for n, p in enumerate(posts):
         others = [other for other in posts if other["slug"] != p["slug"]][:2]
+        newer, older = posts[n - 1] if n else posts[-1], posts[(n + 1) % len(posts)]
+        ring = (f'<nav class="webring" aria-label="Writing ring"><p class="ring-name">✦ NOBIXY\'S WRITING RING ✦</p>'
+                f'<p><a href="/{older["slug"]}/" rel="prev">« older</a> | <a href="/writing/">index</a> | '
+                f'<a href="/{newer["slug"]}/" rel="next">newer »</a></p></nav>') if len(posts) > 1 else ""
         related = post_list(others) if others else '<p>More writing is on the way.</p>'
         body = f'''<div class="article-grid"><div><a class="back-link" href="/writing/">← BACK TO THE ARCHIVE</a>
 <article class="post-panel"><header class="post-header"><p class="eyebrow">A NOTE FROM THE WORKBENCH <span aria-hidden="true">✳</span></p><h1>{esc(p["title"])}</h1><p class="post-meta"><time datetime="{p["date"]}">{p["date"]:%B} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">✳</span>{p["minutes"]} min read</p></header>
 <div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">✳</span><p>Thanks for reading.</p><a href="/writing/">See all writing →</a></footer></article></div>
-<aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>KEEP EXPLORING</span><span aria-hidden="true">↗</span></div><div class="panel-body"><p class="eyebrow">MORE FROM THIS CORNER</p>{related}</div></div><div class="aside-note">✳ MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
-        write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page"))
+<aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>KEEP EXPLORING</span><span aria-hidden="true">↗</span></div><div class="panel-body"><p class="eyebrow">MORE FROM THIS CORNER</p>{related}</div></div>{ring}<div class="aside-note">✳ MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
+        write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     write("feed.xml", feed(posts, data))
     print(f"built docs/: resume + {len(posts)} post(s)")
 
