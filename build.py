@@ -215,40 +215,16 @@ def post_list(posts: list[dict], limit: int | None = None) -> str:
         for i, p in enumerate(items, 1)) + "</ul>"
 
 
-def now_items(data: dict, settings: dict, posts: list[dict]) -> list[str]:
-    """What I'm doing right now, from live data, so it never goes stale."""
-    items = []
-    jobs = data["profile"].get("experience") or []
-    if jobs and "Present" in jobs[0].get("period", ""):
-        items.append(f'Working as a {esc(jobs[0]["role"].replace(" — ", " at "))}.')
-    open_courses = [c["name"] for c in (data.get("learning") or {}).get("open", [])]
-    if open_courses:
-        items.append(f'Studying {esc(" and ".join(open_courses))}: the foundations everything else is built on.')
-    items.append(f'Writing every day. {len(posts)} piece{"" if len(posts) == 1 else "s"} published so far.')
-    return items
-
-
-def why_component(w: dict) -> str:
-    """A small box: each reason is one line; click it to read the rest."""
-    if not w.get("whys"):
-        return ""
-    items = "".join(f'<li><details><summary>{esc(a)}</summary><p>{esc(b)}</p></details></li>' for a, b in w["whys"])
-    quote = f'<p class="why-quote-line">“{esc(w["quote"])}”</p>' if w.get("quote") else ""
-    return (f'<section class="why-mini" aria-labelledby="why-title"><h2 id="why-title"><span aria-hidden="true">♥</span> Why I\'m doing this</h2>'
-            f'<ol>{items}</ol>{quote}</section>')
-
-
-def welcome_story(w: dict, profile: dict, data: dict, posts: list[dict], settings: dict) -> str:
-    """The homepage welcome: goals, what I am doing right now, and a small why box."""
+def welcome_story(w: dict, profile: dict) -> str:
+    """What I'm building toward and why, from site.json. Falls back to the resume summary."""
     if not w:
         return f'<p>{esc(profile["summary"])}</p>'
-    goals = "".join(f'<li><strong>{esc(a)}:</strong> {esc(b)}</li>' for a, b in w.get("goals", []))
-    now = "".join(f"<li>{x}</li>" for x in now_items(data, settings, posts))
+    building = "".join(f'<li><strong>{esc(a)}:</strong> {esc(b)}</li>' for a, b in w.get("building", []))
+    whys = "".join(f'<li><strong>{esc(a)}</strong> {esc(b)}</li>' for a, b in w.get("whys", []))
+    quote = f'<blockquote class="why-quote"><p>“{esc(w["quote"])}”</p><cite>me, writing on <a href="/how-will-it-feel-when-i-reach-it/">How Will It Feel When I Reach It?</a></cite></blockquote>' if w.get("quote") else ""
     return (f'<p class="welcome-intro">{esc(w.get("intro", ""))}</p>'
-            f'<div class="story-boxes"><section class="story-box building-box"><h2><span aria-hidden="true">★</span> What I\'m working toward</h2><ul>{goals}</ul></section>'
-            f'<section class="story-box now-box"><h2><span aria-hidden="true">◆</span> Right now</h2><ul>{now}</ul>'
-            f'<p class="now-updated">Updated {esc(data.get("updated", ""))}</p></section></div>'
-            + why_component(w))
+            f'<div class="story-boxes"><section class="story-box building-box"><h2><span aria-hidden="true">★</span> What I\'m building toward</h2><ul>{building}</ul></section>'
+            f'<section class="story-box why-box"><h2><span aria-hidden="true">♥</span> Why I\'m doing this</h2><ol>{whys}</ol></section></div>{quote}')
 
 
 def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> str:
@@ -269,7 +245,7 @@ def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> 
   <div class="welcome-content"><div class="welcome-copy"><p class="welcome-label">HI THERE! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
     <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
     <p class="headline">{esc(profile["headline"])}</p>
-    {welcome_story(settings.get("welcome") or {}, profile, data, posts, settings)}
+    {welcome_story(settings.get("welcome") or {}, profile)}
     <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
   </div><div class="welcome-art" aria-hidden="true"><div class="pixel-monitor"><div class="monitor-screen"><span>^_^</span><small>HELLO, WEB!</small></div><div class="monitor-stand"></div></div><span class="art-caption">✦ CURRENTLY BUILDING A LIFE IN TECH ✦</span></div></div>
 </section>
@@ -421,10 +397,6 @@ def build() -> None:
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     write("guestbook/index.html", page("Guestbook", guestbook_html(load_guestbook()), data, path="/guestbook/",
                                        page_class="guestbook-page", description="Sign my guestbook!", posts=posts))
-    # Old links to /about/ (from the first version of the site) land on the welcome section, the 1996 way.
-    write("about/index.html", '<!doctype html><meta charset="utf-8"><title>About me</title>'
-          '<meta http-equiv="refresh" content="0; url=/#hello"><link rel="canonical" href="' + SITE_URL + '/">'
-          '<p>This page moved to <a href="/#hello">the homepage</a>.</p>')
     write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",
                            description="Page not found.", posts=posts, noindex=True))
     write("feed/index.html", page("RSS feed", feed_page_html(posts), data, path="/feed/", page_class="feed-page",
