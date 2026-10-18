@@ -26,5 +26,8 @@
       "role": "Produce Clerk — Kroger",
       "period": "Oct 2026 – Present"
     }
-  ]
+  ],
+  "skill_overrides": {
+    "Technical Systems": "Linux (daily user since 2023, Arch), Shell Scripting, Git, PC Setup & Hardware Diagnostics, POS Systems, Microsoft Office (Excel, Outlook), Full-Stack Web Technologies"
+  }
 }

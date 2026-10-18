@@ -14,10 +14,14 @@
         "href": "https://github.com/nobixy"
       }
     ],
+    "education": [
+      "ServSafe Food Protection Manager Certification - National Restaurant Association",
+      "High School Diploma - Frederick Fraize High School, Cloverport, KY"
+    ],
     "skills": [
       {
         "label": "Technical Systems",
-        "text": "Linux (daily Arch user), Shell Scripting, Git, PC Setup & Hardware Diagnostics, POS Systems, Microsoft Office (Excel, Outlook), Full-Stack Web Technologies"
+        "text": "Linux (daily user since 2023, Arch), Shell Scripting, Git, PC Setup & Hardware Diagnostics, POS Systems, Microsoft Office (Excel, Outlook), Full-Stack Web Technologies"
       },
       {
         "label": "Leadership & Operations",
@@ -31,10 +35,6 @@
         "label": "Safety & Quality",
         "text": "ServSafe Food Protection Manager Certified, HACCP Guidelines, Food Safety & Sanitation Standards, Hot-N-Ready Quality Benchmarks, OSHA Compliance & Inspection Readiness"
       }
-    ],
-    "education": [
-      "ServSafe Food Protection Manager Certification - National Restaurant Association",
-      "High School Diploma - Frederick Fraize High School, Cloverport, KY"
     ],
     "experience": [
       {
