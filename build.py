@@ -118,14 +118,13 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
         f'<span aria-hidden="true">-></span>{esc(link["label"])}</a></li>'
         for link in data["profile"].get("links", [])
     )
-    updated = esc(data.get("updated", ""))
+    updated = esc(us_date(data.get("updated", "")))
     learning = data.get("learning", {})
     subjects = " <span>+</span> ".join(esc(course["name"]) for course in learning.get("open", []))
-    reading_meter = '<div class="reading-meter" aria-hidden="true"><span></span></div>' if page_class == "article-page" else ""
     news = ["Welcome to my homepage! Thanks for stopping by.",
             f"Now studying: {', '.join(c['name'] for c in learning.get('open', [])) or 'the basics'}."]
     news += [f"NEW WRITING: {p['title']}" for p in posts[:3]]
-    news.append(f"Last updated {data.get('updated', '')}.")
+    news.append(f"Last updated {us_date(data.get('updated', ''))}.")
     ticker = "".join(f"<span>{esc(n)}</span><i aria-hidden=\"true\">*</i>" for n in news)
     url = f"{SITE_URL}{path}"
     return f"""<!doctype html>
@@ -149,8 +148,6 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-{reading_meter}
-<div class="grain" aria-hidden="true"></div>
 <div class="browser site-shell" id="top">
 <div class="titlebar"><span class="tb-logo" aria-hidden="true">N</span><span class="tb-title">{esc(full)} - Netscape</span><span class="tb-buttons" aria-hidden="true"><b>_</b><b>^</b><b>X</b></span></div>
 <div class="menubar" aria-hidden="true"><span><u>F</u>ile</span><span><u>E</u>dit</span><span><u>V</u>iew</span><span><u>G</u>o</span><span><u>B</u>ookmarks</span><span><u>O</u>ptions</span><span><u>D</u>irectory</span><span><u>W</u>indow</span><span class="mb-help"><u>H</u>elp</span></div>
@@ -178,8 +175,8 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <div class="marquee" role="marquee" aria-label="Site news"><div class="marquee-track"><div class="mq">{ticker}</div><div class="mq" aria-hidden="true">{ticker}</div></div></div>
 <div class="site-layout">
 <aside class="sidebar" aria-label="Site directory">
-  <nav class="side-box side-nav" aria-label="Main navigation"><h2>* MENU / INDEX</h2><ul class="menu-list">{menu}</ul></nav>
-  <section class="side-box status-box"><h2>* NOW / STATUS</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">LESSONS COMPLETED</p>{odometer(int(learning.get("done", 0)))}<p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress -></a></section>
+  <nav class="side-box side-nav" aria-label="Main navigation"><h2>* Menu</h2><ul class="menu-list">{menu}</ul></nav>
+  <section class="side-box status-box"><h2>* What I'm Up To</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">LESSONS COMPLETED</p>{odometer(int(learning.get("done", 0)))}<p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress -></a></section>
   <div class="web-stamps" aria-label="Web badges">{badges()}</div>
   <a class="back-top" href="#top">^ BACK TO TOP</a>
 </aside>
@@ -196,6 +193,27 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 """
 
 
+def us_date(iso: str) -> str:
+    """2026-10-18 -> 10/18/26, the way a 1996 homepage said it. Machines still get ISO in datetime=."""
+    try:
+        d = dt.date.fromisoformat(str(iso)[:10])
+    except ValueError:
+        return str(iso)
+    return f"{d.month:02d}/{d.day:02d}/{d.year % 100:02d}"
+
+
+# 6: plain-ASCII punctuation everywhere a page is written (curly quotes, long dashes, ellipses).
+ASCII_PUNCT = {"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"', "\u2014": "--", "\u2013": "-",
+               "\u2026": "...", "\u00a0": " ", "&rsquo;": "'", "&lsquo;": "'", "&ldquo;": '"', "&rdquo;": '"',
+               "&mdash;": "--", "&ndash;": "-", "&hellip;": "..."}
+
+
+def ascii_punct(text: str) -> str:
+    for a, b in ASCII_PUNCT.items():
+        text = text.replace(a, b)
+    return text
+
+
 def bar(done: int, total: int) -> str:
     pct = 0 if not total else min(100, done * 100 / total)
     return f'<span class="bar" role="img" aria-label="{done} of {total}"><span style="width:{pct:.1f}%"></span></span>'
@@ -208,7 +226,7 @@ def post_list(posts: list[dict], limit: int | None = None) -> str:
     newest = max((p["date"] for p in items), default=None)
     return '<ul class="posts">' + "".join(
         f'<li><a class="post-link" href="/{p["slug"]}/"><span class="post-number">{i:02d}</span>'
-        f'<span class="post-copy"><strong>{esc(p["title"])}{" <em class=\"new-tag blink\">NEW!</em>" if p["date"] == newest else ""}</strong>'
+        f'<span class="post-copy"><strong>{"<em class=\"new-tag blink\">NEW!</em>" if p["date"] == newest else ""}{esc(p["title"])}</strong>'
         + (f'<span>{esc(p["description"])}</span>' if p["description"] else "")
         + f'</span><span class="post-side"><time datetime="{p["date"]}">{p["date"]:%b} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">-></span></span></a></li>'
         for i, p in enumerate(items, 1)) + "</ul>"
@@ -221,13 +239,13 @@ def resume_html(data: dict, posts: list[dict]) -> str:
         for link in profile.get("links", [])
     )
     first = profile["name"].split()[0]
-    updates = [f'<li><time datetime="{esc(data.get("updated", ""))}">{esc(data.get("updated", ""))}</time><span>Resume and study data synced.</span></li>']
+    updates = [f'<li><time datetime="{esc(data.get("updated", ""))}">{esc(us_date(data.get("updated", "")))}</time><span>Resume and study data synced.</span></li>']
     updates.extend(
-        f'<li><time datetime="{post["date"]}">{post["date"]}</time><a href="/{post["slug"]}/">New writing: {esc(post["title"])}</a></li>'
+        f'<li><time datetime="{post["date"]}">{us_date(post["date"].isoformat())}</time><a href="/{post["slug"]}/">New writing: {esc(post["title"])}</a></li>'
         for post in posts[:3]
     )
     out = [f"""<section class="welcome-panel" id="hello" aria-labelledby="hello-title">
-  <div class="section-bar"><span>01 // WELCOME</span><span>PERSONAL SITE * EST. 2026</span></div>
+  <div class="section-bar"><span>Welcome to my Homepage!</span></div>
   <div class="welcome-content"><div class="welcome-copy"><p class="welcome-label">HI THERE! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
     <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
     <p class="headline">{esc(profile["headline"])}</p>
@@ -241,7 +259,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
   </figure></div>
 </section>
 <div class="home-columns"><div class="content-main">
-<section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>UPDATE LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">*</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
+<section class="panel updates-panel"><div class="section-bar"><span>What's New?!</span></div><div class="panel-body"><ul class="updates">{"".join(updates)}</ul></div></section>"""]
 
     if learning:
         open_courses = "".join(
@@ -252,8 +270,8 @@ def resume_html(data: dict, posts: list[dict]) -> str:
             f'<li><span>{esc(phase["name"])}</span>{bar(phase["done"], phase["total"])}<span class="num">{phase["courses_done"]}/{phase["courses"]} courses</span></li>'
             for phase in learning.get("phases", [])
         )
-        out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>03 // STUDY DESK</span><span>IN PROGRESS</span></div><div class="panel-body">
-<h2>Now learning <span aria-hidden="true">*</span></h2><p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, hardware and a capstone. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum -></a></p>
+        out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>What I'm Learning</span></div><div class="panel-body">
+<p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, hardware and a capstone. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum -></a></p>
 <div class="stat-row"><div><strong>{learning["done"]:,}<small> / {learning["total"]:,}</small></strong><span>LESSONS COMPLETE</span></div><div><strong>{learning["courses_done"]}<small> / {learning["courses"]}</small></strong><span>COURSES FINISHED</span></div></div>
 <h3 class="subheading">OPEN COURSES</h3><ul class="progress">{open_courses}</ul>
 <details class="phase-details"><summary>SHOW ALL STUDY PHASES <span aria-hidden="true">[ + ]</span></summary><ul class="progress">{phases}</ul></details>
@@ -265,23 +283,23 @@ def resume_html(data: dict, posts: list[dict]) -> str:
         + ("<ul>" + "".join(f"<li>{esc(bullet)}</li>" for bullet in job["bullets"]) + "</ul>" if job.get("bullets") else "")
         + "</div>" for job in profile.get("experience", [])
     )
-    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>04 // WORK HISTORY</span><span>EXPERIENCE</span></div><div class="panel-body"><h2>Experience <span aria-hidden="true">*</span></h2><div class="jobs">{jobs}</div></div></section>')
+    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>My Resume</span></div><div class="panel-body"><div class="jobs">{jobs}</div></div></section>')
     out.append('</div><aside class="content-rail" aria-label="More about Joseph">')
 
     if posts:
-        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>THE NOTEBOOK</span><span class="blink">NEW!</span></div><div class="panel-body"><h2>Recent writing</h2>{post_list(posts, 3)}<a class="text-link" href="/writing/">-> ALL POSTS</a></div></section>')
+        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>My Writing</span><span class="blink">NEW!</span></div><div class="panel-body">{post_list(posts, 3)}<a class="text-link" href="/writing/">-> ALL POSTS</a></div></section>')
 
     skills = "".join(f'<div><dt>{esc(skill["label"])}</dt><dd>{esc(skill["text"])}</dd></div>' for skill in profile.get("skills", []))
-    out.append(f'<section class="panel skills-panel"><div class="section-bar"><span>TOOLBOX.TXT</span><span>*</span></div><div class="panel-body"><h2>What I know</h2><dl class="skills">{skills}</dl></div></section>')
+    out.append(f'<section class="panel skills-panel"><div class="section-bar"><span>Stuff I Know</span></div><div class="panel-body"><dl class="skills">{skills}</dl></div></section>')
 
     achievements = data.get("achievements") or []
     if achievements:
         items = "".join(f'<li><span class="kind">{esc(item["kind"])}</span>{esc(item["text"])}</li>' for item in achievements)
-        out.append(f'<section class="panel achievements-panel"><div class="section-bar"><span>COMPLETED WORK</span><span>*</span></div><div class="panel-body"><h2>Finished things</h2><ul class="ach">{items}</ul></div></section>')
+        out.append(f'<section class="panel achievements-panel"><div class="section-bar"><span>Stuff I Finished</span></div><div class="panel-body"><ul class="ach">{items}</ul></div></section>')
 
     if profile.get("education"):
         education = "".join(f'<li>{esc(item)}</li>' for item in profile["education"])
-        out.append(f'<section class="panel education-panel"><div class="section-bar"><span>FILE CABINET</span><span>#</span></div><div class="panel-body"><h2>Education &amp; certificates</h2><ul>{education}</ul></div></section>')
+        out.append(f'<section class="panel education-panel"><div class="section-bar"><span>Diplomas &amp; Certificates</span></div><div class="panel-body"><ul>{education}</ul></div></section>')
     out.append('</aside></div>')
     return "\n".join(out)
 
@@ -301,9 +319,9 @@ def not_found_html() -> str:
 
 def feed_page_html(posts: list[dict]) -> str:
     feed_url = f"{SITE_URL}/feed.xml"
-    return f'''<section class="page-heading"><p class="eyebrow">HOME / RSS FEED</p><h1>Get new writing by <em>RSS</em><span aria-hidden="true">*</span></h1>
+    return f'''<section class="page-heading"><p class="eyebrow">You are here: Home &gt; RSS Feed</p><h1>Get new writing by <em>RSS</em><span aria-hidden="true">*</span></h1>
 <p>RSS is how the old web did "follow": paste the address below into a feed reader (Feedly, NetNewsWire, Thunderbird, Inoreader...) and every new post shows up there automatically. No account, no algorithm.</p></section>
-<section class="panel archive-panel"><div class="panel-top"><span>SUBSCRIBE.TXT</span><span>RSS 2.0</span></div><div class="panel-body">
+<section class="panel archive-panel"><div class="panel-top"><span>How to Subscribe</span><span>RSS 2.0</span></div><div class="panel-body">
 <div class="feed-box"><span class="loc-label">Feed address:</span><code class="feed-url">{esc(feed_url)}</code><a class="dlg-btn" href="/feed.xml">Open feed.xml</a></div>
 <h2>In the feed right now <span aria-hidden="true">*</span></h2>{post_list(posts)}</div></section>'''
 
@@ -317,6 +335,7 @@ def feed(posts: list[dict], data: dict) -> str:
 
 
 def write(rel: str, text: str) -> None:
+    text = ascii_punct(text)
     f = OUT / rel
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
@@ -335,12 +354,11 @@ def build() -> None:
     write(".nojekyll", "")
     shutil.copy(ROOT / "style.css", OUT / "style.css")
     shutil.copy(ROOT / "site.js", OUT / "site.js")
-    shutil.copy(ROOT / "grain.svg", OUT / "grain.svg")
     shutil.copy(ROOT / "avatar.jpg", OUT / "avatar.jpg")
     write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
     intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
-    writing_body = f'''<section class="page-heading"><p class="eyebrow">HOME / WRITING / THE ARCHIVE</p><h1>Things I put <em>into words.</em><span aria-hidden="true">*</span></h1><p>Study notes, short stories, and thoughts in progress. This is where they land.</p></section>
-<section class="panel archive-panel"><div class="panel-top"><span>OPEN FOLDER / WRITING</span><span>{len(posts):02d} FILES</span></div><div class="panel-body"><div class="archive-intro">{intro}</div>{post_list(posts)}</div></section>'''
+    writing_body = f'''<section class="page-heading"><p class="eyebrow">You are here: Home &gt; Writing</p><h1>Things I put <em>into words.</em><span aria-hidden="true">*</span></h1><p>Study notes, short stories, and thoughts in progress. This is where they land.</p></section>
+<section class="panel archive-panel"><div class="panel-top"><span>All My Writing</span><span>{len(posts)} pieces</span></div><div class="panel-body"><div class="archive-intro">{intro}</div>{post_list(posts)}</div></section>'''
     write("writing/index.html", page("Writing", writing_body, data, path="/writing/", page_class="archive-page",
                                      description="What I'm learning, written up.", posts=posts))
     for n, p in enumerate(posts):
@@ -351,9 +369,9 @@ def build() -> None:
                 f'<a href="/{newer["slug"]}/" rel="next">newer >></a></p></nav>') if len(posts) > 1 else ""
         related = post_list(others) if others else '<p>More writing is on the way.</p>'
         body = f'''<div class="article-grid"><div><a class="back-link" href="/writing/"><- BACK TO THE ARCHIVE</a>
-<article class="post-panel"><header class="post-header"><p class="eyebrow">A NOTE FROM THE WORKBENCH <span aria-hidden="true">*</span></p><h1>{esc(p["title"])}</h1><p class="post-meta"><time datetime="{p["date"]}">{p["date"]:%B} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">*</span>{p["minutes"]} min read</p></header>
+<article class="post-panel"><header class="post-header"><p class="eyebrow">You are here: <a href="/">Home</a> &gt; <a href="/writing/">Writing</a></p><h1>{esc(p["title"])}</h1><p class="post-meta">Posted on <time datetime="{p["date"]}">{p["date"]:%B} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">*</span>{p["minutes"]} min read</p></header>
 <div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">*</span><p>Thanks for reading.</p><a href="/writing/">See all writing -></a></footer></article></div>
-<aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>KEEP EXPLORING</span><span aria-hidden="true">-></span></div><div class="panel-body"><p class="eyebrow">MORE FROM THIS CORNER</p>{related}</div></div>{ring}<div class="aside-note">* MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
+<aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>More Writing</span><span aria-hidden="true"></span></div><div class="panel-body"><p class="eyebrow">Read these next:</p>{related}</div></div>{ring}<div class="aside-note">* MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",
                            description="Page not found.", posts=posts, noindex=True))

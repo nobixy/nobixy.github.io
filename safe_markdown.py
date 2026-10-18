@@ -105,6 +105,6 @@ class _Cleaner(HTMLParser):
 
 def render(text: str) -> str:
     cleaner = _Cleaner()
-    cleaner.feed(markdown.markdown(text, extensions=['extra', 'smarty']))
+    cleaner.feed(markdown.markdown(text, extensions=['extra']))
     cleaner.close()
     return cleaner.result()

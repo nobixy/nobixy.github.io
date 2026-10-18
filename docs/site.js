@@ -93,20 +93,4 @@
     sparkles += 1;
     s.addEventListener('animationend', () => { s.remove(); sparkles -= 1; });
   }, { passive: true });
-
-  // Reading meter on articles.
-  const meter = document.querySelector('.reading-meter span');
-  if (meter) {
-    let queued = false;
-    const updateMeter = () => {
-      const distance = Math.max(1, html.scrollHeight - window.innerHeight);
-      meter.style.transform = `scaleX(${Math.min(1, Math.max(0, window.scrollY / distance))})`;
-      queued = false;
-    };
-    const queueUpdate = () => { if (!queued) { queued = true; window.requestAnimationFrame(updateMeter); } };
-    window.addEventListener('scroll', queueUpdate, { passive: true });
-    window.addEventListener('resize', queueUpdate);
-    window.addEventListener('pageshow', queueUpdate);
-    queueUpdate();
-  }
 })();
