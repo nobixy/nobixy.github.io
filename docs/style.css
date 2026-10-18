@@ -115,9 +115,9 @@ header.site p span { color: #d34f8b; }
 .side-box li:last-child { border-bottom: 0; }
 .side-nav a { display: flex; align-items: center; min-height: 34px; padding: 5px 8px; color: var(--link); font: bold 13px var(--chrome-font); text-decoration: underline; }
 .side-nav a:visited { color: var(--visited); }
-.side-nav a span { width: 18px; flex: none; margin-right: 6px; color: #e04f88; font-size: 15px; text-align: center; text-decoration: none; }
+.side-nav a span { display: inline-block; width: 22px; flex: none; font-family: var(--mono); font-weight: bold; margin-right: 6px; color: #e04f88; font-size: 15px; text-align: center; text-decoration: none; }
 .side-nav a:hover, .side-nav a[aria-current='page'], .side-nav a[data-parent='current'] { background: var(--yellow); color: var(--hot); }
-.side-nav a[aria-current='page']::after { content: '◄'; margin-left: auto; color: var(--hot); font-size: 11px; animation: blink 1.6s steps(1) infinite; }
+.side-nav a[aria-current='page']::after { content: '<'; margin-left: auto; color: var(--hot); font-size: 11px; animation: blink 1.6s steps(1) infinite; }
 .side-nav a:hover span { animation: marker-pop .7s steps(6, end); }
 .status-box > p, .status-box > a, .status-box > .odometer { margin-left: 4px; margin-right: 4px; }
 .status-box p { margin: 6px 4px; font: 13px var(--chrome-font); color: #000; }
@@ -150,7 +150,7 @@ html.dialing-in main { animation: interlace var(--slow) steps(16, end) both; }
 .welcome-panel, .panel, .page-heading, .post-panel { border: 4px ridge #b9c8e8; background: #fff; }
 .section-bar, .panel-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 24px; padding: 3px 6px 3px 8px; background: linear-gradient(90deg, var(--navy), var(--title-end)); color: #fff; font: bold 12px/1.3 var(--chrome-font); }
 .section-bar span:last-child, .panel-top span:last-child { color: var(--yellow); font-family: var(--mono); }
-.section-bar::after, .panel-top::after { content: '_ □ ×'; flex: none; padding: 0 4px; background: var(--chrome); box-shadow: var(--raised); color: #000; font: bold 10px/14px var(--chrome-font); letter-spacing: .3em; }
+.section-bar::after, .panel-top::after { content: '_ ^ X'; flex: none; padding: 0 4px; background: var(--chrome); box-shadow: var(--raised); color: #000; font: bold 10px/14px var(--chrome-font); letter-spacing: .3em; }
 .panel-body { padding: 12px 14px 14px; }
 .panel h2 { margin: 0 0 8px; color: #2b4f92; font: bold 22px/1.2 var(--body-font); }
 .panel h2 span { color: #e073a0; }
@@ -168,7 +168,7 @@ html.dialing-in main { animation: interlace var(--slow) steps(16, end) both; }
 .monitor-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; width: 122px; height: 90px; border: 7px solid #c0c0c0; outline: 2px solid #555; background: #001a00; box-shadow: inset 0 0 12px #0f0, 4px 4px 0 #f6a9cc; }
 .monitor-screen span { color: #39ff14; font: bold 29px/1 var(--mono); text-shadow: 0 0 6px #39ff14; }
 .monitor-screen small { margin-top: 4px; color: #39ff14; font: bold 9px var(--mono); }
-.monitor-screen small::after { content: '█'; margin-left: 2px; animation: blink 1.4s steps(1) infinite; }
+.monitor-screen small::after { content: '_'; margin-left: 2px; animation: blink 1.4s steps(1) infinite; }
 .monitor-stand { width: 42px; height: 17px; margin: 2px auto 0; border-bottom: 7px solid #777; background: #b5b5b5; }
 .art-caption { color: #5677a3; font: bold 11px/1.3 var(--mono); text-align: center; }
 .home-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, 31%); align-items: start; gap: 16px; margin-top: 14px; }

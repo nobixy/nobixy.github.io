@@ -77,7 +77,7 @@
 
   // A sparkle cursor trail. Mouse only, never on touch.
   let lastSparkle = 0, sparkles = 0;
-  const shapes = ['✦', '✧', '★', '·', '✶'];
+  const shapes = ['*', '+', '.', 'x', 'o'];
   document.addEventListener('pointermove', (event) => {
     if (event.pointerType !== 'mouse' || still()) return;
     const now = performance.now();
