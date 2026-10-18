@@ -95,7 +95,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
     posts = posts or []
     menu_items = (
         ("/", "⌂", "Home"),
-        ("/now/", "◆", "Now & why"),
+        (f"{home}#hello", "◆", "About me"),
         (f"{home}#learning", "◇", "Study log"),
         (f"{home}#experience", "◆", "Experience"),
         ("/writing/", "◇", "Writing archive"),
@@ -228,8 +228,18 @@ def now_items(data: dict, settings: dict, posts: list[dict]) -> list[str]:
     return items
 
 
+def why_component(w: dict) -> str:
+    """A small box: each reason is one line; click it to read the rest."""
+    if not w.get("whys"):
+        return ""
+    items = "".join(f'<li><details><summary>{esc(a)}</summary><p>{esc(b)}</p></details></li>' for a, b in w["whys"])
+    quote = f'<p class="why-quote-line">“{esc(w["quote"])}”</p>' if w.get("quote") else ""
+    return (f'<section class="why-mini" aria-labelledby="why-title"><h2 id="why-title"><span aria-hidden="true">♥</span> Why I\'m doing this</h2>'
+            f'<ol>{items}</ol>{quote}</section>')
+
+
 def welcome_story(w: dict, profile: dict, data: dict, posts: list[dict], settings: dict) -> str:
-    """The homepage version: short enough to read in ten seconds. The full story lives on /now/."""
+    """The homepage welcome: goals, what I am doing right now, and a small why box."""
     if not w:
         return f'<p>{esc(profile["summary"])}</p>'
     goals = "".join(f'<li><strong>{esc(a)}:</strong> {esc(b)}</li>' for a, b in w.get("goals", []))
@@ -238,26 +248,7 @@ def welcome_story(w: dict, profile: dict, data: dict, posts: list[dict], setting
             f'<div class="story-boxes"><section class="story-box building-box"><h2><span aria-hidden="true">★</span> What I\'m working toward</h2><ul>{goals}</ul></section>'
             f'<section class="story-box now-box"><h2><span aria-hidden="true">◆</span> Right now</h2><ul>{now}</ul>'
             f'<p class="now-updated">Updated {esc(data.get("updated", ""))}</p></section></div>'
-            f'<p class="why-line"><span aria-hidden="true">♥</span> <strong>Why?</strong> {esc(w.get("one_line_why", ""))} '
-            f'<a href="/now/#why">Read my whole why →</a></p>')
-
-
-def now_page_html(w: dict, data: dict, posts: list[dict], settings: dict) -> str:
-    goals = "".join(f'<li><strong>{esc(a)}:</strong> {esc(b)}</li>' for a, b in w.get("goals", []))
-    now = "".join(f"<li>{x}</li>" for x in now_items(data, settings, posts))
-    whys = "".join(f'<li><strong>{esc(a)}</strong> {esc(b)}</li>' for a, b in w.get("whys", []))
-    score = "".join(f"<li>{esc(x)}</li>" for x in w.get("keep_score", []))
-    quote = (f'<blockquote class="why-quote"><p>“{esc(w["quote"])}”</p><cite>me, in '
-             f'<a href="/how-will-it-feel-when-i-reach-it/">How Will It Feel When I Reach It?</a></cite></blockquote>') if w.get("quote") else ""
-    return f'''<section class="page-heading"><p class="eyebrow">HOME / NOW</p><h1>What I'm doing <em>now</em>, and why<span aria-hidden="true">✳</span></h1>
-<p>This is my <a href="https://nownownow.com/about" target="_blank" rel="noopener noreferrer">/now page</a>: what I'm focused on at this point in my life. Last updated {esc(data.get("updated", ""))}.</p></section>
-<div class="now-grid">
-<section class="panel"><div class="panel-top"><span>NOW.TXT</span><span>{esc(data.get("updated", ""))}</span></div><div class="panel-body"><h2>Right now</h2><ul class="now-list">{now}</ul></div></section>
-<section class="panel"><div class="panel-top"><span>GOALS.TXT</span><span>★</span></div><div class="panel-body"><h2>What I'm working toward</h2><ul class="now-list">{goals}</ul></div></section>
-<section class="panel why-panel" id="why"><div class="panel-top"><span>WHY.TXT</span><span>♥</span></div><div class="panel-body"><h2>Why I'm doing this</h2><ol class="why-list">{whys}</ol>{quote}</div></section>
-<section class="panel"><div class="panel-top"><span>SCOREBOARD.TXT</span><span>✱</span></div><div class="panel-body"><h2>How I keep score</h2><ul class="now-list">{score}</ul>
-<p><a href="/#learning">See my study progress →</a></p></div></section>
-</div>'''
+            + why_component(w))
 
 
 def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> str:
@@ -279,7 +270,7 @@ def resume_html(data: dict, posts: list[dict], settings: dict | None = None) -> 
     <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
     <p class="headline">{esc(profile["headline"])}</p>
     {welcome_story(settings.get("welcome") or {}, profile, data, posts, settings)}
-    <div class="quick-links"><a href="/now/">▸ NOW &amp; WHY</a><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
+    <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
   </div><div class="welcome-art" aria-hidden="true"><div class="pixel-monitor"><div class="monitor-screen"><span>^_^</span><small>HELLO, WEB!</small></div><div class="monitor-stand"></div></div><span class="art-caption">✦ CURRENTLY BUILDING A LIFE IN TECH ✦</span></div></div>
 </section>
 <div class="home-columns"><div class="content-main">
@@ -430,13 +421,10 @@ def build() -> None:
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     write("guestbook/index.html", page("Guestbook", guestbook_html(load_guestbook()), data, path="/guestbook/",
                                        page_class="guestbook-page", description="Sign my guestbook!", posts=posts))
-    if settings.get("welcome"):
-        write("now/index.html", page("Now", now_page_html(settings["welcome"], data, posts, settings), data, path="/now/",
-                                     page_class="now-page", description="What I'm doing now, and why.", posts=posts))
-    # Old links to /about/ (from the first version of the site) land on /now/, the 1996 way.
-    write("about/index.html", '<!doctype html><meta charset="utf-8"><title>Moved to /now/</title>'
-          '<meta http-equiv="refresh" content="0; url=/now/"><link rel="canonical" href="' + SITE_URL + '/now/">'
-          '<p>This page moved to <a href="/now/">/now/</a>.</p>')
+    # Old links to /about/ (from the first version of the site) land on the welcome section, the 1996 way.
+    write("about/index.html", '<!doctype html><meta charset="utf-8"><title>About me</title>'
+          '<meta http-equiv="refresh" content="0; url=/#hello"><link rel="canonical" href="' + SITE_URL + '/">'
+          '<p>This page moved to <a href="/#hello">the homepage</a>.</p>')
     write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",
                            description="Page not found.", posts=posts, noindex=True))
     write("feed/index.html", page("RSS feed", feed_page_html(posts), data, path="/feed/", page_class="feed-page",
