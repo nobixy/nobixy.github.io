@@ -66,8 +66,20 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
     nav = "".join(
         f'<a href="{href}" {"aria-current=\"page\"" if path == href else ""}>'
         f'<span>{number}</span>{label}</a>'
-        for href, number, label in (("/", "01", "Home"), ("/writing/", "02", "Writing"))
+        for href, number, label in (("/", "01", "HOME"), ("/writing/", "02", "WRITING"))
     )
+    home = "" if path == "/" else "/"
+    menu = "".join(
+        f'<li><a href="{home}{anchor}"><span aria-hidden="true">{icon}</span>{label}</a></li>'
+        for anchor, icon, label in (("#hello", "◆", "Hello / About"), ("#learning", "◇", "Study log"),
+                                    ("#experience", "◆", "Experience"))
+    )
+    elsewhere = "".join(
+        f'<li><a href="{esc(link["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(link["label"])} ↗</a></li>'
+        for link in data["profile"].get("links", [])
+    )
+    updated = esc(data.get("updated", ""))
+    subjects = " <span>+</span> ".join(esc(course["name"]) for course in data.get("learning", {}).get("open", []))
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -80,25 +92,34 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{SITE_URL}{path}">
 <meta name="twitter:card" content="summary">
-<meta name="theme-color" content="#15142f">
+<meta name="theme-color" content="#e8f1fb">
 <link rel="alternate" type="application/rss+xml" title="{esc(name)}: writing" href="/feed.xml">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%2315142f%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ecff79%22/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%2324366e%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffd3e3%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css?v={STYLE_VERSION}">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <div class="grain" aria-hidden="true"></div>
 <div class="site-shell">
-<div class="utility-bar"><span><span class="live-dot" aria-hidden="true"></span> PERSONAL INTERNET SPACE</span><span>EST. 2026 <span aria-hidden="true">✳</span> STILL IN PROGRESS</span></div>
+<div class="utility-bar"><span>☆ WELCOME TO MY LITTLE CORNER OF THE INTERNET ☆</span><span>LAST UPDATED: {updated}</span></div>
 <header class="site">
-  <a class="brand" href="/" aria-label="{esc(name)} home"><span class="brand-icon" aria-hidden="true">✳</span><span>nobixy<span class="brand-suffix">.github.io</span></span></a>
-  <nav aria-label="Main navigation">{nav}<a href="/feed.xml"><span>03</span>RSS</a></nav>
+  <div class="brand-line"><span class="brand-spark" aria-hidden="true">✦</span><a class="brand" href="/" aria-label="{esc(name)} home">NOBIXY<span>'S ROOM</span></a><span class="brand-spark" aria-hidden="true">✦</span></div>
+  <p>the personal homepage of {esc(name)} <span aria-hidden="true">✳</span> learning, making, writing</p>
+  <div class="header-badges" aria-label="Site badges"><span>EST. 2026</span><span>TEXT FIRST</span><span>ALWAYS UNDER CONSTRUCTION</span></div>
 </header>
-<div class="signal-strip"><span>✳ A LITTLE CORNER OF THE WEB</span><span>STUDYING / WRITING / FIGURING IT OUT</span><span aria-hidden="true">✳ ✳ ✳</span></div>
+<nav class="top-nav" aria-label="Main navigation">{nav}<a href="/feed.xml"><span>03</span>RSS FEED</a><a href="https://github.com/nobixy"><span>04</span>GITHUB ↗</a></nav>
+<div class="site-layout">
+<aside class="sidebar" aria-label="Site directory">
+  <section class="side-box"><h2>★ MENU / 目次</h2><ul class="menu-list">{menu}<li><a href="/writing/"><span aria-hidden="true">◇</span>Writing archive</a></li><li><a href="/feed.xml"><span aria-hidden="true">◆</span>RSS feed</a></li></ul></section>
+  <section class="side-box status-box"><h2>★ NOW / 近況</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress →</a></section>
+  <section class="side-box links-box"><h2>★ LINKS / リンク</h2><ul>{elsewhere}<li><a href="{esc(data.get("learning", {}).get("curriculum_href", "https://github.com/nobixy"), quote=True)}">Study curriculum ↗</a></li></ul></section>
+  <div class="web-stamps" aria-label="Web badges"><span>NO ADS</span><span>RSS READY</span><span>BEST VIEWED CURIOUS</span></div>
+</aside>
 <main id="main" class="{page_class}">
 {body}
 </main>
-<footer class="site"><div><span class="footer-star" aria-hidden="true">✳</span><strong>Thanks for stopping by.</strong><span>Built by {esc(name)}. Last synced {esc(data.get("updated", ""))}.</span></div><div class="footer-links"><a href="/">Home</a><a href="/writing/">Writing</a><a href="https://github.com/nobixy">GitHub ↗</a></div></footer>
+</div>
+<footer class="site"><p>✳ Thanks for visiting {esc(name)}'s homepage. Come back soon!</p><p>LAST SYNC: {updated} &nbsp; / &nbsp; <a href="/">HOME</a> &nbsp; / &nbsp; <a href="/writing/">WRITING</a></p></footer>
 </div>
 </body>
 </html>
@@ -123,62 +144,70 @@ def post_list(posts: list[dict], limit: int | None = None) -> str:
 
 
 def resume_html(data: dict, posts: list[dict]) -> str:
-    p, learn = data["profile"], data.get("learning") or {}
-    links = "".join(f'<a href="{esc(l["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(l["label"])} ↗</a>' for l in p.get("links", []))
-    learning_action = '<a class="button button-ghost" href="#learning">What I\'m learning <span aria-hidden="true">↓</span></a>' if learn else ''
-    first, _, last = p["name"].partition(" ")
-    out = [f"""<section class="hero" aria-labelledby="hero-title">
-  <div class="hero-copy">
-    <p class="eyebrow"><span aria-hidden="true">✳</span> HI, YOU FOUND MY CORNER OF THE INTERNET</p>
-    <h1 id="hero-title"><span>{esc(first)}</span><span>{esc(last or first)}<i aria-hidden="true">✳</i></span></h1>
-    <p class="hero-headline">{esc(p["headline"])}</p>
-    <div class="hero-actions"><a class="button button-primary" href="/writing/">Read my writing <span aria-hidden="true">↗</span></a>{learning_action}</div>
-    <div class="hero-contact">{f'<span class="location">⌁ {esc(p["location"])}</span>' if p.get("location") else ''}{links}</div>
-  </div>
-  <div class="about-window">
-    <div class="window-title"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>about_me.txt</span><span aria-hidden="true">✕</span></div>
-    <div class="about-content"><div class="orbit" aria-hidden="true"><span>JN</span><i>✳</i></div><p>{esc(p["summary"])}</p><span class="window-status"><span class="live-dot" aria-hidden="true"></span> CURRENTLY LEARNING IN PUBLIC</span></div>
-  </div>
-  <div class="hero-footer"><span>SCROLL TO EXPLORE <span aria-hidden="true">↓</span></span><span>NO POP-UPS. JUST IDEAS. <span aria-hidden="true">✳</span></span></div>
-</section><div class="content-grid"><div class="content-main">"""]
+    profile, learning = data["profile"], data.get("learning") or {}
+    links = "".join(
+        f'<a href="{esc(link["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(link["label"])} ↗</a>'
+        for link in profile.get("links", [])
+    )
+    first = profile["name"].split()[0]
+    updates = [f'<li><time datetime="{esc(data.get("updated", ""))}">{esc(data.get("updated", ""))}</time><span>Resume and study data synced.</span></li>']
+    updates.extend(
+        f'<li><time datetime="{post["date"]}">{post["date"]}</time><a href="/{post["slug"]}/">New writing: {esc(post["title"])}</a></li>'
+        for post in posts[:3]
+    )
+    out = [f"""<section class="welcome-panel" id="hello" aria-labelledby="hello-title">
+  <div class="section-bar"><span>01 // WELCOME</span><span>PERSONAL SITE ✦ EST. 2026</span></div>
+  <div class="welcome-content"><div class="welcome-copy"><p class="jp-label">ようこそ! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
+    <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
+    <p class="headline">{esc(profile["headline"])}</p>
+    <p>{esc(profile["summary"])}</p>
+    <div class="quick-links"><a href="#learning">▸ WHAT I'M STUDYING</a><a href="/writing/">▸ READ MY WRITING</a>{links}</div>
+  </div><div class="welcome-art" aria-hidden="true"><div class="pixel-monitor"><div class="monitor-screen"><span>^_^</span><small>HELLO, WEB!</small></div><div class="monitor-stand"></div></div><span class="art-caption">✦ CURRENTLY BUILDING A LIFE IN TECH ✦</span></div></div>
+</section>
+<div class="notice-strip"><strong>NEWS FLASH!</strong><span>Learning in public, one lesson and one page at a time.</span><span>✿ ✿ ✿</span></div>
+<div class="home-columns"><div class="content-main">
+<section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>更新履歴 / LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">✳</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
 
-    if learn:
-        cur = "".join(f'<li><span>{esc(c["name"])}</span>{bar(c["done"], c["total"])}<span class="num">{c["done"]}/{c["total"]}</span></li>'
-                      for c in learn.get("open", []))
-        phases = "".join(f'<li><span>{esc(ph["name"])}</span>{bar(ph["done"], ph["total"])}<span class="num">{ph["courses_done"]}/{ph["courses"]} courses</span></li>'
-                         for ph in learn.get("phases", []))
-        out.append(f"""<section class="panel learning-panel" id="learning">
-  <div class="panel-top"><span>01 / THE CURRENT QUEST</span><span aria-hidden="true">✳ ✳ ✳</span></div>
-  <div class="panel-body"><div class="section-title"><div><p class="eyebrow">ON THE WORKBENCH</p><h2>Now learning<span class="pink-star" aria-hidden="true">✳</span></h2></div><span class="pill">LIVE PROGRESS</span></div>
-  <p class="learning-intro">I'm working through a self-built electrical engineering and computer science curriculum: {learn["courses"]} courses on one path, from foundations through systems, hardware and a capstone. <a href="{esc(learn["curriculum_href"], quote=True)}">Explore the curriculum ↗</a></p>
-  <div class="stat-row"><div><strong>{learn["done"]:,}</strong><span>lessons complete <small>/ {learn["total"]:,} total</small></span></div><div><strong>{learn["courses_done"]}</strong><span>courses finished <small>/ {learn["courses"]} total</small></span></div></div>
-  {f'<div class="progress-wrap"><h3>Open courses <span>IN MOTION</span></h3><ul class="progress">{cur}</ul></div>' if cur else ''}
-  <details class="phase-details"><summary>See the full journey <span aria-hidden="true">＋</span></summary><ul class="progress">{phases}</ul></details>
-  </div></section>""")
+    if learning:
+        open_courses = "".join(
+            f'<li><span>{esc(course["name"])}</span>{bar(course["done"], course["total"])}<span class="num">{course["done"]}/{course["total"]}</span></li>'
+            for course in learning.get("open", [])
+        )
+        phases = "".join(
+            f'<li><span>{esc(phase["name"])}</span>{bar(phase["done"], phase["total"])}<span class="num">{phase["courses_done"]}/{phase["courses"]} courses</span></li>'
+            for phase in learning.get("phases", [])
+        )
+        out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>03 // STUDY DESK</span><span>勉強 / IN PROGRESS</span></div><div class="panel-body">
+<h2>Now learning <span aria-hidden="true">✳</span></h2><p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, hardware and a capstone. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum ↗</a></p>
+<div class="stat-row"><div><strong>{learning["done"]:,}<small> / {learning["total"]:,}</small></strong><span>LESSONS COMPLETE</span></div><div><strong>{learning["courses_done"]}<small> / {learning["courses"]}</small></strong><span>COURSES FINISHED</span></div></div>
+<h3 class="subheading">OPEN COURSES</h3><ul class="progress">{open_courses}</ul>
+<details class="phase-details"><summary>SHOW ALL STUDY PHASES <span aria-hidden="true">[ + ]</span></summary><ul class="progress">{phases}</ul></details>
+</div></section>""")
 
     jobs = "".join(
-        f'<div class="job"><div class="job-heading"><h3>{esc(j["role"])}</h3><p class="period">{esc(j["period"])}</p></div>'
-        + (f'<p>{esc(j["note"])}</p>' if j.get("note") else "")
-        + ("<ul>" + "".join(f"<li>{esc(b)}</li>" for b in j["bullets"]) + "</ul>" if j.get("bullets") else "") + "</div>"
-        for j in p.get("experience", []))
-    out.append('<section class="panel experience-panel"><div class="panel-top"><span>02 / THE REAL-WORLD STUFF</span><span aria-hidden="true">✳ ✳ ✳</span></div><div class="panel-body"><p class="eyebrow">THINGS I HAVE DONE</p><h2>Experience<span class="pink-star" aria-hidden="true">✳</span></h2><div class="jobs">' + jobs + '</div></div></section>')
+        f'<div class="job"><div class="job-heading"><h3>{esc(job["role"])}</h3><span class="period">{esc(job["period"])}</span></div>'
+        + (f'<p>{esc(job["note"])}</p>' if job.get("note") else "")
+        + ("<ul>" + "".join(f"<li>{esc(bullet)}</li>" for bullet in job["bullets"]) + "</ul>" if job.get("bullets") else "")
+        + "</div>" for job in profile.get("experience", [])
+    )
+    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>04 // WORK HISTORY</span><span>経歴 / EXPERIENCE</span></div><div class="panel-body"><h2>Experience <span aria-hidden="true">✳</span></h2><div class="jobs">{jobs}</div></div></section>')
     out.append('</div><aside class="content-rail" aria-label="More about Joseph">')
 
     if posts:
-        out.append(f'<section class="panel writing-panel"><div class="panel-top"><span>THE NOTEBOOK</span><span aria-hidden="true">↗</span></div><div class="panel-body"><p class="eyebrow">FRESH FROM THE BRAIN</p><h2>Writing</h2>{post_list(posts, 3)}<a class="text-link" href="/writing/">Visit the whole archive <span aria-hidden="true">→</span></a></div></section>')
+        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>THE NOTEBOOK</span><span>NEW!</span></div><div class="panel-body"><h2>Recent writing</h2>{post_list(posts, 3)}<a class="text-link" href="/writing/">→ ALL POSTS</a></div></section>')
 
-    skills = "".join(f'<div><dt>{esc(s["label"])}</dt><dd>{esc(s["text"])}</dd></div>' for s in p.get("skills", []))
-    out.append('<section class="panel skills-panel"><div class="panel-top"><span>THE TOOLBOX</span><span aria-hidden="true">✳</span></div><div class="panel-body"><p class="eyebrow">WHAT I BRING</p><h2>Skills</h2><dl class="skills">' + skills + '</dl></div></section>')
+    skills = "".join(f'<div><dt>{esc(skill["label"])}</dt><dd>{esc(skill["text"])}</dd></div>' for skill in profile.get("skills", []))
+    out.append(f'<section class="panel skills-panel"><div class="section-bar"><span>TOOLBOX.TXT</span><span>✱</span></div><div class="panel-body"><h2>What I know</h2><dl class="skills">{skills}</dl></div></section>')
 
-    ach = data.get("achievements") or []
-    if ach:
-        achievements = "".join(f'<li><span class="kind">{esc(a["kind"])}</span>{esc(a["text"])}</li>' for a in ach)
-        out.append('<section class="panel achievements-panel"><div class="panel-top"><span>UNLOCKED</span><span aria-hidden="true">★</span></div><div class="panel-body"><p class="eyebrow">PROOF OF WORK</p><h2>Completed work</h2><p class="muted">Added when the learning checks are recorded.</p><ul class="ach">' + achievements + '</ul></div></section>')
+    achievements = data.get("achievements") or []
+    if achievements:
+        items = "".join(f'<li><span class="kind">{esc(item["kind"])}</span>{esc(item["text"])}</li>' for item in achievements)
+        out.append(f'<section class="panel achievements-panel"><div class="section-bar"><span>COMPLETED WORK</span><span>★</span></div><div class="panel-body"><h2>Finished things</h2><ul class="ach">{items}</ul></div></section>')
 
-    if p.get("education"):
-        education = "".join(f'<li>{esc(e)}</li>' for e in p["education"])
-        out.append('<section class="panel education-panel"><div class="panel-top"><span>THE PAPER TRAIL</span><span aria-hidden="true">✳</span></div><div class="panel-body"><p class="eyebrow">FORMAL BITS</p><h2>Education &amp; certifications</h2><ul>' + education + '</ul></div></section>')
-    out.append("</aside></div>")
+    if profile.get("education"):
+        education = "".join(f'<li>{esc(item)}</li>' for item in profile["education"])
+        out.append(f'<section class="panel education-panel"><div class="section-bar"><span>FILE CABINET</span><span>▤</span></div><div class="panel-body"><h2>Education &amp; certificates</h2><ul>{education}</ul></div></section>')
+    out.append('</aside></div>')
     return "\n".join(out)
 
 
