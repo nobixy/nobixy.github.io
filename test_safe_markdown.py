@@ -27,4 +27,17 @@ class SafeMarkdownTests(unittest.TestCase):
         self.assertNotIn("href=", render('<a href="java&#x73;cript:alert(1)">bad</a>'))
         self.assertNotIn("src=", render('![bad](data:image/svg+xml;base64,xxx)'))
 
+    def test_guestbook_signatures_are_plain_escaped_text(self):
+        book = {"url": "https://github.com/x/y/discussions/1", "entries": [
+            {"name": "<b>eve</b>", "profile": "javascript:alert(1)", "date": "2026-10-18",
+             "text": "<script>alert(1)</script>\n**hi**"}]}
+        html = build.guestbook_html(book)
+        self.assertNotIn("<script", html)
+        self.assertNotIn("<b>eve", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertIn("**hi**", html)
+        self.assertIn("<br>", html)
+        self.assertIn("001", html)
+        self.assertNotIn("javascript:", html)
+
 if __name__ == "__main__": unittest.main()

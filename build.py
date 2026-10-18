@@ -99,7 +99,8 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
         (f"{home}#learning", "◇", "Study log"),
         (f"{home}#experience", "◆", "Experience"),
         ("/writing/", "◇", "Writing archive"),
-        ("/feed.xml", "◆", "RSS feed"),
+        ("/guestbook/", "◆", "Guestbook"),
+        ("/feed.xml", "◇", "RSS feed"),
     )
     def menu_state(href: str) -> str:
         if href == path:
@@ -281,6 +282,38 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     return "\n".join(out)
 
 
+GUESTBOOK_URL = "https://github.com/nobixy/nobixy.github.io/discussions/1"
+
+
+def load_guestbook() -> dict:
+    try:
+        book = json.loads((ROOT / "data" / "guestbook.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        book = {}
+    return {"url": book.get("url") or GUESTBOOK_URL, "entries": book.get("entries") or []}
+
+
+def guestbook_html(book: dict) -> str:
+    """Signatures are other people's words: plain text only, escaped, never Markdown or HTML."""
+    sign = f'<a class="sign-btn" href="{esc(book["url"], quote=True)}" target="_blank" rel="noopener noreferrer">✍ SIGN MY GUESTBOOK!</a>'
+    if book["entries"]:
+        rows = "".join(
+            f'<li class="gb-entry"><div class="gb-head"><span class="gb-num">#{len(book["entries"]) - i:03d}</span>'
+            + (f'<a href="{esc(e["profile"], quote=True)}" target="_blank" rel="noopener noreferrer nofollow ugc">{esc(e["name"])}</a>'
+               if str(e.get("profile", "")).startswith("https://github.com/") else f'<b>{esc(e["name"])}</b>')
+            + f'<time datetime="{esc(e["date"])}">{esc(e["date"])}</time></div>'
+            f'<p>{"<br>".join(esc(line) for line in e["text"].splitlines())}</p></li>'
+            for i, e in enumerate(book["entries"]))
+        entries = f'<ol class="guestbook">{rows}</ol>'
+    else:
+        entries = '<p class="gb-empty">No signatures yet. Be the first! <span class="blink">★</span></p>'
+    count = len(book["entries"])
+    return f'''<section class="page-heading"><p class="eyebrow">HOME / GUESTBOOK</p><h1>Sign my <em>guestbook!</em><span aria-hidden="true">✳</span></h1><p>Say hi, tell me how you found this place, or share something you're learning. Every visitor makes my day.</p></section>
+<section class="panel guestbook-panel"><div class="panel-top"><span>GUESTBOOK.EXE</span><span>{count:03d} SIGNATURE{"" if count == 1 else "S"}</span></div><div class="panel-body">
+<div class="gb-sign">{sign}<p>Signing uses a free GitHub account: just leave a comment on the guestbook thread. New signatures appear here within a day.</p></div>
+{entries}</div></section>'''
+
+
 def feed(posts: list[dict], data: dict) -> str:
     def rfc822(d: dt.date) -> str:
         return dt.datetime(d.year, d.month, d.day, 12, tzinfo=dt.timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
@@ -327,6 +360,8 @@ def build() -> None:
 <div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">✳</span><p>Thanks for reading.</p><a href="/writing/">See all writing →</a></footer></article></div>
 <aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>KEEP EXPLORING</span><span aria-hidden="true">↗</span></div><div class="panel-body"><p class="eyebrow">MORE FROM THIS CORNER</p>{related}</div></div>{ring}<div class="aside-note">✳ MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
+    write("guestbook/index.html", page("Guestbook", guestbook_html(load_guestbook()), data, path="/guestbook/",
+                                       page_class="guestbook-page", description="Sign my guestbook!", posts=posts))
     write("feed.xml", feed(posts, data))
     print(f"built docs/: resume + {len(posts)} post(s)")
 
