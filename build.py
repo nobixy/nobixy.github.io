@@ -99,7 +99,6 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
         (f"{home}#learning", "◇", "Study log"),
         (f"{home}#experience", "◆", "Experience"),
         ("/writing/", "◇", "Writing archive"),
-        ("/guestbook/", "◆", "Guestbook"),
         ("/feed/", "◇", "RSS feed"),
     )
     def menu_state(href: str) -> str:
@@ -282,38 +281,6 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     return "\n".join(out)
 
 
-GUESTBOOK_URL = "https://github.com/nobixy/nobixy.github.io/discussions/1"
-
-
-def load_guestbook() -> dict:
-    try:
-        book = json.loads((ROOT / "data" / "guestbook.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        book = {}
-    return {"url": book.get("url") or GUESTBOOK_URL, "entries": book.get("entries") or []}
-
-
-def guestbook_html(book: dict) -> str:
-    """Signatures are other people's words: plain text only, escaped, never Markdown or HTML."""
-    sign = f'<a class="sign-btn" href="{esc(book["url"], quote=True)}" target="_blank" rel="noopener noreferrer">✍ SIGN MY GUESTBOOK!</a>'
-    if book["entries"]:
-        rows = "".join(
-            f'<li class="gb-entry"><div class="gb-head"><span class="gb-num">#{len(book["entries"]) - i:03d}</span>'
-            + (f'<a href="{esc(e["profile"], quote=True)}" target="_blank" rel="noopener noreferrer nofollow ugc">{esc(e["name"])}</a>'
-               if str(e.get("profile", "")).startswith("https://github.com/") else f'<b>{esc(e["name"])}</b>')
-            + f'<time datetime="{esc(e["date"])}">{esc(e["date"])}</time></div>'
-            f'<p>{"<br>".join(esc(line) for line in e["text"].splitlines())}</p></li>'
-            for i, e in enumerate(book["entries"]))
-        entries = f'<ol class="guestbook">{rows}</ol>'
-    else:
-        entries = '<p class="gb-empty">No signatures yet. Be the first! <span class="blink">★</span></p>'
-    count = len(book["entries"])
-    return f'''<section class="page-heading"><p class="eyebrow">HOME / GUESTBOOK</p><h1>Sign my <em>guestbook!</em><span aria-hidden="true">✳</span></h1><p>Say hi, tell me how you found this place, or share something you're learning. Every visitor makes my day.</p></section>
-<section class="panel guestbook-panel"><div class="panel-top"><span>GUESTBOOK.EXE</span><span>{count:03d} SIGNATURE{"" if count == 1 else "S"}</span></div><div class="panel-body">
-<div class="gb-sign">{sign}<p>Signing uses a free GitHub account: just leave a comment on the guestbook thread. New signatures appear here within a day.</p></div>
-{entries}</div></section>'''
-
-
 def not_found_html() -> str:
     return '''<section class="error-desk">
 <div class="dialog" role="alertdialog" aria-labelledby="err-title" aria-describedby="err-text">
@@ -321,7 +288,7 @@ def not_found_html() -> str:
   <div class="dialog-body"><span class="dialog-icon" aria-hidden="true">!</span>
     <div><h1 id="err-title">404: File Not Found</h1>
     <p id="err-text">The page <code class="err-path">you asked for</code> could not be found on this server. It may have moved, been deleted, or it's still under construction.</p></div></div>
-  <div class="dialog-actions"><a class="dlg-btn" href="/">OK</a><a class="dlg-btn" href="/writing/">Writing</a><a class="dlg-btn" href="/guestbook/">Guestbook</a></div>
+  <div class="dialog-actions"><a class="dlg-btn" href="/">OK</a><a class="dlg-btn" href="/writing/">Writing</a></div>
 </div>
 <p class="lost">✦ LOST IN CYBERSPACE ✦ TRY THE MENU ON THE LEFT ✦</p>
 </section>'''
@@ -382,8 +349,6 @@ def build() -> None:
 <div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">✳</span><p>Thanks for reading.</p><a href="/writing/">See all writing →</a></footer></article></div>
 <aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>KEEP EXPLORING</span><span aria-hidden="true">↗</span></div><div class="panel-body"><p class="eyebrow">MORE FROM THIS CORNER</p>{related}</div></div>{ring}<div class="aside-note">✳ MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
-    write("guestbook/index.html", page("Guestbook", guestbook_html(load_guestbook()), data, path="/guestbook/",
-                                       page_class="guestbook-page", description="Sign my guestbook!", posts=posts))
     write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",
                            description="Page not found.", posts=posts, noindex=True))
     write("feed/index.html", page("RSS feed", feed_page_html(posts), data, path="/feed/", page_class="feed-page",

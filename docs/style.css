@@ -372,25 +372,6 @@ html.page-leaving::after { content: ''; position: fixed; inset: 0; z-index: 180;
   .sparkle { display: none; }
 }
 
-/* ---------------------------------------------------------------- guestbook */
-.guestbook-panel { margin-top: 14px; }
-.guestbook-panel .panel-top { background: linear-gradient(90deg, #6b0070, #d65bb5); }
-.gb-sign { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; padding: 12px; border: 2px dashed #e0a0c0; background: #fff8fb; }
-.gb-sign p { flex: 1 1 260px; margin: 0; font-size: 15px; }
-.sign-btn { display: inline-block; padding: 8px 14px; background: var(--chrome); box-shadow: var(--raised); color: #000; font: bold 15px var(--chrome-font); text-decoration: none; animation: blink-glow 2.4s steps(2) infinite; }
-.sign-btn:visited { color: #000; }
-.sign-btn:hover { background: var(--yellow); color: var(--hot); }
-.sign-btn:active { box-shadow: var(--sunken); }
-.guestbook { margin: 0; padding: 0; list-style: none; }
-.gb-entry { margin-bottom: 12px; border: 3px ridge #d9c2e8; background: repeating-linear-gradient(#fff 0 27px, #e4ecf8 27px 28px); }
-.gb-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 4px 10px; border-bottom: 2px groove #e2d4ee; background: #f7efff; font: bold 14px var(--chrome-font); }
-.gb-num { color: #8a5a88; font: bold 12px var(--mono); }
-.gb-head time { margin-left: auto; color: #6b5f80; font: 12px var(--mono); }
-.gb-entry p { margin: 0; padding: 4px 12px 8px; font: 17px/28px var(--body-font); overflow-wrap: anywhere; }
-.gb-empty { padding: 20px; border: 2px inset #ddd; background: #fff; font-size: 17px; text-align: center; }
-@keyframes blink-glow { 50% { box-shadow: var(--raised), 0 0 0 3px var(--yellow); } }
-@media (prefers-reduced-motion: reduce) { .sign-btn { animation: none; } }
-
 /* ---------------------------------------------------------------- 404 dialog and feed page */
 .error-desk { display: grid; place-items: center; gap: 18px; min-height: 420px; padding: 30px 10px; }
 .dialog { width: min(460px, 100%); padding: 3px; background: var(--chrome); box-shadow: var(--raised), 6px 6px 0 #00000040; }
