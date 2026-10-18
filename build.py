@@ -69,7 +69,7 @@ def badges() -> str:
         ("b-arch", "ARCH", "LINUX USER", "https://archlinux.org/"),
         ("b-py", "PYTHON", "POWERED", "https://www.python.org/"),
         ("b-src", "VIEW", "SOURCE", REPO_URL),
-        ("b-rss", "RSS", "XML FEED", "/feed.xml"),
+        ("b-rss", "RSS", "XML FEED", "/feed/"),
         ("b-noads", "NO ADS", "NO TRACKING", ""),
         ("b-800", "BEST AT", "800 x 600", ""),
     )
@@ -87,7 +87,7 @@ def odometer(n: int, digits: int = 6) -> str:
 
 
 def page(title: str, body: str, data: dict, *, description: str = "", path: str = "/", page_class: str = "",
-         posts: list | None = None) -> str:
+         posts: list | None = None, noindex: bool = False) -> str:
     name = data["profile"]["name"]
     full = title if title == name else f"{title} · {name}"
     desc = description or data["profile"].get("headline", "")
@@ -100,7 +100,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
         (f"{home}#experience", "◆", "Experience"),
         ("/writing/", "◇", "Writing archive"),
         ("/guestbook/", "◆", "Guestbook"),
-        ("/feed.xml", "◇", "RSS feed"),
+        ("/feed/", "◇", "RSS feed"),
     )
     def menu_state(href: str) -> str:
         if href == path:
@@ -136,7 +136,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(full)}</title>
 <meta name="description" content="{esc(desc)}">
-<link rel="canonical" href="{url}">
+{'<meta name="robots" content="noindex">' if noindex else f'<link rel="canonical" href="{url}">'}
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:url" content="{url}">
@@ -314,6 +314,28 @@ def guestbook_html(book: dict) -> str:
 {entries}</div></section>'''
 
 
+def not_found_html() -> str:
+    return '''<section class="error-desk">
+<div class="dialog" role="alertdialog" aria-labelledby="err-title" aria-describedby="err-text">
+  <div class="dialog-title"><span>Netscape</span><span class="tb-buttons" aria-hidden="true"><b>×</b></span></div>
+  <div class="dialog-body"><span class="dialog-icon" aria-hidden="true">!</span>
+    <div><h1 id="err-title">404: File Not Found</h1>
+    <p id="err-text">The page <code class="err-path">you asked for</code> could not be found on this server. It may have moved, been deleted, or it's still under construction.</p></div></div>
+  <div class="dialog-actions"><a class="dlg-btn" href="/">OK</a><a class="dlg-btn" href="/writing/">Writing</a><a class="dlg-btn" href="/guestbook/">Guestbook</a></div>
+</div>
+<p class="lost">✦ LOST IN CYBERSPACE ✦ TRY THE MENU ON THE LEFT ✦</p>
+</section>'''
+
+
+def feed_page_html(posts: list[dict]) -> str:
+    feed_url = f"{SITE_URL}/feed.xml"
+    return f'''<section class="page-heading"><p class="eyebrow">HOME / RSS FEED</p><h1>Get new writing by <em>RSS</em><span aria-hidden="true">✳</span></h1>
+<p>RSS is how the old web did "follow": paste the address below into a feed reader (Feedly, NetNewsWire, Thunderbird, Inoreader...) and every new post shows up there automatically. No account, no algorithm.</p></section>
+<section class="panel archive-panel"><div class="panel-top"><span>SUBSCRIBE.TXT</span><span>RSS 2.0</span></div><div class="panel-body">
+<div class="feed-box"><span class="loc-label">Feed address:</span><code class="feed-url">{esc(feed_url)}</code><a class="dlg-btn" href="/feed.xml">Open feed.xml</a></div>
+<h2>In the feed right now <span aria-hidden="true">✳</span></h2>{post_list(posts)}</div></section>'''
+
+
 def feed(posts: list[dict], data: dict) -> str:
     def rfc822(d: dt.date) -> str:
         return dt.datetime(d.year, d.month, d.day, 12, tzinfo=dt.timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
@@ -362,6 +384,10 @@ def build() -> None:
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     write("guestbook/index.html", page("Guestbook", guestbook_html(load_guestbook()), data, path="/guestbook/",
                                        page_class="guestbook-page", description="Sign my guestbook!", posts=posts))
+    write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",
+                           description="Page not found.", posts=posts, noindex=True))
+    write("feed/index.html", page("RSS feed", feed_page_html(posts), data, path="/feed/", page_class="feed-page",
+                                  description="Follow new writing by RSS.", posts=posts))
     write("feed.xml", feed(posts, data))
     print(f"built docs/: resume + {len(posts)} post(s)")
 

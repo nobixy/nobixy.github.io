@@ -45,6 +45,12 @@
     go(destination.href, destination.pathname);
   });
 
+  // The location bar always shows the real address (the 404 page is served for any missing path).
+  const loc = document.querySelector('.loc-field');
+  if (loc) loc.textContent = location.href;
+  const errPath = document.querySelector('.err-path');
+  if (errPath) errPath.textContent = location.pathname;
+
   // Toolbar Back and Forward, like the real thing.
   const back = document.querySelector('[data-browser="back"]');
   const forward = document.querySelector('[data-browser="forward"]');
