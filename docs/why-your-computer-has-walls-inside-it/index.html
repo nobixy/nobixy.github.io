@@ -10,17 +10,25 @@
 <meta property="og:description" content="Kernel space, user space, and why your computer hides things from you even when you&#x27;re the admin.">
 <meta property="og:url" content="https://nobixy.github.io/why-your-computer-has-walls-inside-it/">
 <meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#15142f">
 <link rel="alternate" type="application/rss+xml" title="Joseph Noblett: writing" href="/feed.xml">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%232f7d4f%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-family=%22sans-serif%22 font-size=%2216%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22%3EJN%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%2315142f%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ecff79%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="grain" aria-hidden="true"></div>
+<div class="site-shell">
+<div class="utility-bar"><span><span class="live-dot" aria-hidden="true"></span> PERSONAL INTERNET SPACE</span><span>EST. 2026 <span aria-hidden="true">✳</span> STILL IN PROGRESS</span></div>
 <header class="site">
-  <a class="name" href="/">Joseph Noblett</a>
-  <nav><a href="/">Resume</a><a href="/writing/">Writing</a><a href="/feed.xml">RSS</a></nav>
+  <a class="brand" href="/" aria-label="Joseph Noblett home"><span class="brand-icon" aria-hidden="true">✳</span><span>nobixy<span class="brand-suffix">.github.io</span></span></a>
+  <nav aria-label="Main navigation"><a href="/" ><span>01</span>Home</a><a href="/writing/" ><span>02</span>Writing</a><a href="/feed.xml"><span>03</span>RSS</a></nav>
 </header>
-<main>
-<article><h1>Why Your Computer Has Walls Inside It</h1><p class="meta"><time datetime="2026-10-16">October 16, 2026</time> · 2 min read</p><p>Have you ever wondered why computers have root users and admins? I have. Why is this system needed? Why does a computer hide its complex details from the user? It turns out the same idea runs through almost every complex system today. First I&rsquo;ll describe the two &ldquo;spaces&rdquo; on your Linux machine, then I&rsquo;ll explain why they&rsquo;re kept separate.</p>
+<div class="signal-strip"><span>✳ A LITTLE CORNER OF THE WEB</span><span>STUDYING / WRITING / FIGURING IT OUT</span><span aria-hidden="true">✳ ✳ ✳</span></div>
+<main id="main" class="article-page">
+<div class="article-grid"><div><a class="back-link" href="/writing/">← BACK TO THE ARCHIVE</a>
+<article class="post-panel"><header class="post-header"><p class="eyebrow">A NOTE FROM THE WORKBENCH <span aria-hidden="true">✳</span></p><h1>Why Your Computer Has Walls Inside It</h1><p class="post-meta"><time datetime="2026-10-16">October 16, 2026</time><span aria-hidden="true">✳</span>2 min read</p></header>
+<div class="post-content"><p>Have you ever wondered why computers have root users and admins? I have. Why is this system needed? Why does a computer hide its complex details from the user? It turns out the same idea runs through almost every complex system today. First I&rsquo;ll describe the two &ldquo;spaces&rdquo; on your Linux machine, then I&rsquo;ll explain why they&rsquo;re kept separate.</p>
 <h2>Two spaces</h2>
 <p>There are two main areas inside a Linux machine. <strong>Kernel space</strong> is the orchestration space for the whole operating system. The kernel can read, write, update and delete anything, and it&rsquo;s the only part that talks to the hardware directly. It acts as the interface between programs and the hardware.</p>
 <p><strong>User space</strong> is everything you control: folders, processes, GUIs and programs. It&rsquo;s the interface you use to talk to the kernel, which in turn talks to the hardware (memory and CPU).</p>
@@ -32,8 +40,10 @@
 <p>You don&rsquo;t need to know how bits travel from memory to the CPU. You just need to know that clicking a button pulls up your web browser. Everything comes down to abstractions. Engineers love to hide the details the end user doesn&rsquo;t need to see. The user just needs to know which inputs produce the outputs they want.</p>
 <p>Look at the first computers compared to now. We kept adding abstractions. Operating systems arrived to manage programs and processes as they grew with time and Moore&rsquo;s law. A program is many abstractions in one: it&rsquo;s built on system calls and other Unix commands. A web browser is a document viewer and a network client in one.</p>
 <h2>Why it matters</h2>
-<p>At the end of the day, these systems are set up to get as many people using computers as possible. Nobody wants to set up every piece of their computer like IKEA furniture. And remember: when these systems were first designed, they were still using time-sharing. Not everyone had a computer like we do today.</p></article><p class="back"><a href="/writing/">← All writing</a></p>
+<p>At the end of the day, these systems are set up to get as many people using computers as possible. Nobody wants to set up every piece of their computer like IKEA furniture. And remember: when these systems were first designed, they were still using time-sharing. Not everyone had a computer like we do today.</p></div><footer class="post-end"><span aria-hidden="true">✳</span><p>Thanks for reading.</p><a href="/writing/">See all writing →</a></footer></article></div>
+<aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>KEEP EXPLORING</span><span aria-hidden="true">↗</span></div><div class="panel-body"><p class="eyebrow">MORE FROM THIS CORNER</p><ul class="posts"><li><a class="post-link" href="/how-will-it-feel-when-i-reach-it/"><span class="post-number">01</span><span class="post-copy"><strong>How Will It Feel When I Reach It?</strong><span>I&#x27;ve never finished anything I started. Here&#x27;s how I think it&#x27;ll feel when I finally do.</span></span><span class="post-side"><time datetime="2026-10-17">Oct 17, 2026</time><span aria-hidden="true">↗</span></span></a></li><li><a class="post-link" href="/iteration/"><span class="post-number">02</span><span class="post-copy"><strong>Iteration</strong><span>My first short story</span></span><span class="post-side"><time datetime="2026-10-12">Oct 12, 2026</time><span aria-hidden="true">↗</span></span></a></li></ul></div></div><div class="aside-note">✳ MADE ON THE INTERNET, WITH CARE.</div></aside></div>
 </main>
-<footer class="site">Updated 2026-10-18 from my study dashboard. · <a href="https://github.com/nobixy">GitHub</a></footer>
+<footer class="site"><div><span class="footer-star" aria-hidden="true">✳</span><strong>Thanks for stopping by.</strong><span>Built by Joseph Noblett. Last synced 2026-10-18.</span></div><div class="footer-links"><a href="/">Home</a><a href="/writing/">Writing</a><a href="https://github.com/nobixy">GitHub ↗</a></div></footer>
+</div>
 </body>
 </html>
