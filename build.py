@@ -23,6 +23,7 @@ from safe_markdown import render
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs"
 STYLE_VERSION = hashlib.sha256((ROOT / "style.css").read_bytes()).hexdigest()[:12]
+SCRIPT_VERSION = hashlib.sha256((ROOT / "site.js").read_bytes()).hexdigest()[:12]
 SITE_URL = "https://nobixy.github.io"
 WPM = 220
 
@@ -63,23 +64,35 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
     name = data["profile"]["name"]
     full = title if title == name else f"{title} · {name}"
     desc = description or data["profile"].get("headline", "")
-    nav = "".join(
-        f'<a href="{href}" {"aria-current=\"page\"" if path == href else ""}>'
-        f'<span>{number}</span>{label}</a>'
-        for href, number, label in (("/", "01", "HOME"), ("/writing/", "02", "WRITING"))
-    )
     home = "" if path == "/" else "/"
-    menu = "".join(
-        f'<li><a href="{home}{anchor}"><span aria-hidden="true">{icon}</span>{label}</a></li>'
-        for anchor, icon, label in (("#hello", "◆", "Hello / About"), ("#learning", "◇", "Study log"),
-                                    ("#experience", "◆", "Experience"))
+    menu_items = (
+        ("/", "⌂", "Home"),
+        (f"{home}#hello", "◆", "About me"),
+        (f"{home}#learning", "◇", "Study log"),
+        (f"{home}#experience", "◆", "Experience"),
+        ("/writing/", "◇", "Writing archive"),
+        ("/feed.xml", "◆", "RSS feed"),
     )
-    elsewhere = "".join(
-        f'<li><a href="{esc(link["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(link["label"])} ↗</a></li>'
+    def menu_state(href: str) -> str:
+        if href == path:
+            return ' aria-current="page"'
+        if href == "/writing/" and page_class == "article-page":
+            return ' data-parent="current"'
+        return ""
+
+    menu = "".join(
+        f'<li><a href="{href}"{menu_state(href)}>'
+        f'<span aria-hidden="true">{icon}</span>{label}</a></li>'
+        for href, icon, label in menu_items
+    )
+    menu += "".join(
+        f'<li><a href="{esc(link["href"], quote=True)}" target="_blank" rel="noopener noreferrer">'
+        f'<span aria-hidden="true">↗</span>{esc(link["label"])}</a></li>'
         for link in data["profile"].get("links", [])
     )
     updated = esc(data.get("updated", ""))
     subjects = " <span>+</span> ".join(esc(course["name"]) for course in data.get("learning", {}).get("open", []))
+    reading_meter = '<div class="reading-meter" aria-hidden="true"><span></span></div>' if page_class == "article-page" else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -96,11 +109,13 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <link rel="alternate" type="application/rss+xml" title="{esc(name)}: writing" href="/feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%2324366e%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffd3e3%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css?v={STYLE_VERSION}">
+<script src="/site.js?v={SCRIPT_VERSION}" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
+{reading_meter}
 <div class="grain" aria-hidden="true"></div>
-<div class="site-shell">
+<div class="site-shell" id="top">
 <div class="utility-bar"><span>☆ WELCOME TO MY LITTLE CORNER OF THE INTERNET ☆</span><span>LAST UPDATED: {updated}</span></div>
 <header class="site">
   <div class="header-identity">
@@ -109,19 +124,18 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
   </div>
   <div class="header-badges" aria-label="Site badges"><span>EST. 2026</span><span>TEXT FIRST</span><span>ALWAYS UNDER CONSTRUCTION</span></div>
 </header>
-<nav class="top-nav" aria-label="Main navigation">{nav}<a href="/feed.xml"><span>03</span>RSS FEED</a><a href="https://github.com/nobixy"><span>04</span>GITHUB ↗</a></nav>
 <div class="site-layout">
 <aside class="sidebar" aria-label="Site directory">
-  <section class="side-box"><h2>★ MENU / INDEX</h2><ul class="menu-list">{menu}<li><a href="/writing/"><span aria-hidden="true">◇</span>Writing archive</a></li><li><a href="/feed.xml"><span aria-hidden="true">◆</span>RSS feed</a></li></ul></section>
+  <nav class="side-box side-nav" aria-label="Main navigation"><h2>★ MENU / INDEX</h2><ul class="menu-list">{menu}</ul></nav>
   <section class="side-box status-box"><h2>★ NOW / STATUS</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress →</a></section>
-  <section class="side-box links-box"><h2>★ LINKS / ELSEWHERE</h2><ul>{elsewhere}<li><a href="{esc(data.get("learning", {}).get("curriculum_href", "https://github.com/nobixy"), quote=True)}">Study curriculum ↗</a></li></ul></section>
   <div class="web-stamps" aria-label="Web badges"><span>NO ADS</span><span>RSS READY</span><span>BEST VIEWED CURIOUS</span></div>
+  <a class="back-top" href="#top">↑ BACK TO TOP</a>
 </aside>
 <main id="main" class="{page_class}">
 {body}
 </main>
 </div>
-<footer class="site"><p>✳ Thanks for visiting {esc(name)}'s homepage. Come back soon!</p><p>LAST SYNC: {updated} &nbsp; / &nbsp; <a href="/">HOME</a> &nbsp; / &nbsp; <a href="/writing/">WRITING</a></p></footer>
+<footer class="site"><p>✳ Thanks for visiting {esc(name)}'s homepage. Come back soon!</p><p>LAST SYNC: {updated} &nbsp; / &nbsp; <a href="/">HOME</a> &nbsp; / &nbsp; <a href="/writing/">WRITING</a> &nbsp; / &nbsp; <a href="#top">↑ TOP</a></p></footer>
 </div>
 </body>
 </html>
@@ -239,6 +253,7 @@ def build() -> None:
     OUT.mkdir()
     write(".nojekyll", "")
     shutil.copy(ROOT / "style.css", OUT / "style.css")
+    shutil.copy(ROOT / "site.js", OUT / "site.js")
     shutil.copy(ROOT / "grain.svg", OUT / "grain.svg")
     write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page"))
     intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
