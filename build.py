@@ -11,6 +11,7 @@ Run: python3 build.py   (preview: python3 -m http.server -d docs 8000)
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import html
 import json
 import re
@@ -21,6 +22,7 @@ from safe_markdown import render
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs"
+STYLE_VERSION = hashlib.sha256((ROOT / "style.css").read_bytes()).hexdigest()[:12]
 SITE_URL = "https://nobixy.github.io"
 WPM = 220
 
@@ -81,7 +83,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <meta name="theme-color" content="#15142f">
 <link rel="alternate" type="application/rss+xml" title="{esc(name)}: writing" href="/feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%2315142f%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ecff79%22/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/style.css?v={STYLE_VERSION}">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
