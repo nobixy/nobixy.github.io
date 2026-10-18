@@ -103,16 +103,18 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <div class="site-shell">
 <div class="utility-bar"><span>☆ WELCOME TO MY LITTLE CORNER OF THE INTERNET ☆</span><span>LAST UPDATED: {updated}</span></div>
 <header class="site">
+  <div class="header-identity">
   <div class="brand-line"><span class="brand-spark" aria-hidden="true">✦</span><a class="brand" href="/" aria-label="{esc(name)} home">NOBIXY<span>'S ROOM</span></a><span class="brand-spark" aria-hidden="true">✦</span></div>
   <p>the personal homepage of {esc(name)} <span aria-hidden="true">✳</span> learning, making, writing</p>
+  </div>
   <div class="header-badges" aria-label="Site badges"><span>EST. 2026</span><span>TEXT FIRST</span><span>ALWAYS UNDER CONSTRUCTION</span></div>
 </header>
 <nav class="top-nav" aria-label="Main navigation">{nav}<a href="/feed.xml"><span>03</span>RSS FEED</a><a href="https://github.com/nobixy"><span>04</span>GITHUB ↗</a></nav>
 <div class="site-layout">
 <aside class="sidebar" aria-label="Site directory">
-  <section class="side-box"><h2>★ MENU / 目次</h2><ul class="menu-list">{menu}<li><a href="/writing/"><span aria-hidden="true">◇</span>Writing archive</a></li><li><a href="/feed.xml"><span aria-hidden="true">◆</span>RSS feed</a></li></ul></section>
-  <section class="side-box status-box"><h2>★ NOW / 近況</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress →</a></section>
-  <section class="side-box links-box"><h2>★ LINKS / リンク</h2><ul>{elsewhere}<li><a href="{esc(data.get("learning", {}).get("curriculum_href", "https://github.com/nobixy"), quote=True)}">Study curriculum ↗</a></li></ul></section>
+  <section class="side-box"><h2>★ MENU / INDEX</h2><ul class="menu-list">{menu}<li><a href="/writing/"><span aria-hidden="true">◇</span>Writing archive</a></li><li><a href="/feed.xml"><span aria-hidden="true">◆</span>RSS feed</a></li></ul></section>
+  <section class="side-box status-box"><h2>★ NOW / STATUS</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress →</a></section>
+  <section class="side-box links-box"><h2>★ LINKS / ELSEWHERE</h2><ul>{elsewhere}<li><a href="{esc(data.get("learning", {}).get("curriculum_href", "https://github.com/nobixy"), quote=True)}">Study curriculum ↗</a></li></ul></section>
   <div class="web-stamps" aria-label="Web badges"><span>NO ADS</span><span>RSS READY</span><span>BEST VIEWED CURIOUS</span></div>
 </aside>
 <main id="main" class="{page_class}">
@@ -157,7 +159,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     )
     out = [f"""<section class="welcome-panel" id="hello" aria-labelledby="hello-title">
   <div class="section-bar"><span>01 // WELCOME</span><span>PERSONAL SITE ✦ EST. 2026</span></div>
-  <div class="welcome-content"><div class="welcome-copy"><p class="jp-label">ようこそ! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
+  <div class="welcome-content"><div class="welcome-copy"><p class="welcome-label">HI THERE! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
     <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
     <p class="headline">{esc(profile["headline"])}</p>
     <p>{esc(profile["summary"])}</p>
@@ -166,7 +168,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
 </section>
 <div class="notice-strip"><strong>NEWS FLASH!</strong><span>Learning in public, one lesson and one page at a time.</span><span>✿ ✿ ✿</span></div>
 <div class="home-columns"><div class="content-main">
-<section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>更新履歴 / LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">✳</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
+<section class="panel updates-panel"><div class="section-bar"><span>02 // SITE UPDATES</span><span>UPDATE LOG</span></div><div class="panel-body"><h2>What's new <span aria-hidden="true">✳</span></h2><ul class="updates">{"".join(updates)}</ul></div></section>"""]
 
     if learning:
         open_courses = "".join(
@@ -177,7 +179,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
             f'<li><span>{esc(phase["name"])}</span>{bar(phase["done"], phase["total"])}<span class="num">{phase["courses_done"]}/{phase["courses"]} courses</span></li>'
             for phase in learning.get("phases", [])
         )
-        out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>03 // STUDY DESK</span><span>勉強 / IN PROGRESS</span></div><div class="panel-body">
+        out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>03 // STUDY DESK</span><span>IN PROGRESS</span></div><div class="panel-body">
 <h2>Now learning <span aria-hidden="true">✳</span></h2><p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, hardware and a capstone. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum ↗</a></p>
 <div class="stat-row"><div><strong>{learning["done"]:,}<small> / {learning["total"]:,}</small></strong><span>LESSONS COMPLETE</span></div><div><strong>{learning["courses_done"]}<small> / {learning["courses"]}</small></strong><span>COURSES FINISHED</span></div></div>
 <h3 class="subheading">OPEN COURSES</h3><ul class="progress">{open_courses}</ul>
@@ -190,7 +192,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
         + ("<ul>" + "".join(f"<li>{esc(bullet)}</li>" for bullet in job["bullets"]) + "</ul>" if job.get("bullets") else "")
         + "</div>" for job in profile.get("experience", [])
     )
-    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>04 // WORK HISTORY</span><span>経歴 / EXPERIENCE</span></div><div class="panel-body"><h2>Experience <span aria-hidden="true">✳</span></h2><div class="jobs">{jobs}</div></div></section>')
+    out.append(f'<section class="panel experience-panel" id="experience"><div class="section-bar"><span>04 // WORK HISTORY</span><span>EXPERIENCE</span></div><div class="panel-body"><h2>Experience <span aria-hidden="true">✳</span></h2><div class="jobs">{jobs}</div></div></section>')
     out.append('</div><aside class="content-rail" aria-label="More about Joseph">')
 
     if posts:
