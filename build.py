@@ -247,7 +247,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     out = [f"""<section class="welcome-panel" id="hello" aria-labelledby="hello-title">
   <div class="section-bar"><span>Welcome to my Homepage!</span></div>
   <div class="welcome-content"><div class="welcome-copy"><p class="welcome-label">HI THERE! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
-    <h1 id="hello-title">Hello! <span>I'm {esc(first)}.</span></h1>
+    <h1 id="hello-title">Hello, World! <span>I'm {esc(first)}.</span></h1>
     <p class="headline">{esc(profile["headline"])}</p>
     <p>{esc(profile["summary"])}</p>
     <div class="quick-links"><a href="#learning">> WHAT I'M STUDYING</a><a href="/writing/">> READ MY WRITING</a>{links}</div>
