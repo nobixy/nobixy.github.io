@@ -1,0 +1,143 @@
+{
+  "profile": {
+    "name": "Joseph Noblett",
+    "headline": "Software Development | Linux Systems | Operations Leadership",
+    "summary": "Hands-on experience with Linux, shell scripting, Git, POS systems and PC hardware diagnostics, supported by restaurant operations and high-volume logistics experience. Brings team leadership, troubleshooting, financial accountability and clear communication to technical work. Building deeper Python, C/C++ and systems knowledge through project-based EECS self-study.",
+    "location": "Brandenburg, KY",
+    "links": [
+      {
+        "label": "LinkedIn",
+        "href": "https://www.linkedin.com/in/joe-noblett"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/nobixy"
+      }
+    ],
+    "skills": [
+      {
+        "label": "Technical Systems",
+        "text": "Linux (daily Arch user), Shell Scripting, Git, PC Setup & Hardware Diagnostics, POS Systems, Microsoft Office (Excel, Outlook), Full-Stack Web Technologies"
+      },
+      {
+        "label": "Leadership & Operations",
+        "text": "Crew Supervision (17+ Staff), Shift Management, Scheduling & Labor Optimization, Onboarding & Training, Performance Appraisals, Guest Escalations, Opening & Closing Operations"
+      },
+      {
+        "label": "Financial Controls",
+        "text": "Food & Labor Cost Control, Inventory Management & Ordering, Cash Drawer & Safe Reconciliation, Bank Deposits, District Sales & P&L Reporting"
+      },
+      {
+        "label": "Safety & Quality",
+        "text": "ServSafe Food Protection Manager Certified, HACCP Guidelines, Food Safety & Sanitation Standards, Hot-N-Ready Quality Benchmarks, OSHA Compliance & Inspection Readiness"
+      }
+    ],
+    "education": [
+      "ServSafe Food Protection Manager Certification - National Restaurant Association",
+      "High School Diploma - Frederick Fraize High School, Cloverport, KY"
+    ],
+    "experience": [
+      {
+        "bullets": [],
+        "role": "Produce Clerk — Kroger",
+        "period": "Oct 2026 – Present"
+      },
+      {
+        "role": "Shift Lead / Manager — McDonald's",
+        "period": "Oct 2025 – Sep 2026 | Brandenburg, KY",
+        "bullets": [
+          "Led peak-volume shift operations, coordinating crew assignments, break rotations and service delivery.",
+          "Trained and onboarded crew members, coached station operations and resolved customer escalations.",
+          "Reconciled cash drawers, audited safe balances and completed bank deposits and shift accounting."
+        ],
+        "note": ""
+      },
+      {
+        "role": "General Manager — Little Caesars Pizza",
+        "period": "Oct 2024 – Sep 2025 | Brandenburg, KY",
+        "bullets": [
+          "Led recruiting, scheduling and daily operations for a team of 17 crew members and shift leads.",
+          "Managed food and labor costs, inventory, purchasing and waste reduction against store profitability benchmarks.",
+          "Prepared weekly sales, labor and inventory reports for district leadership; managed cash audits and deposits.",
+          "Enforced product, food safety and sanitation standards with zero audit infractions."
+        ],
+        "note": "Joined as Crew Member in Apr 2024; promoted to Quality Trainer in Jul 2024 and General Manager in Oct 2024."
+      },
+      {
+        "role": "Package Handler / Small Sort Specialist — UPS Worldport",
+        "period": "Aug 2023 – Mar 2024 | Louisville, KY",
+        "bullets": [
+          "Sorted and routed time-sensitive shipments at UPS Worldport, using computerized tracking and barcode scanning to verify destinations.",
+          "Met hourly sorting targets while following safety, hazardous material handling and equipment procedures."
+        ],
+        "note": "Prior Warehouse & Logistics Tenure: Jul 2018 – Feb 2022 (3 years, 8 months)"
+      }
+    ]
+  },
+  "learning": {
+    "done": 11,
+    "total": 1913,
+    "courses": 54,
+    "courses_done": 0,
+    "phases": [
+      {
+        "name": "Phase A",
+        "done": 11,
+        "total": 151,
+        "courses": 3,
+        "courses_done": 0
+      },
+      {
+        "name": "Phase B",
+        "done": 0,
+        "total": 176,
+        "courses": 4,
+        "courses_done": 0
+      },
+      {
+        "name": "Phase C",
+        "done": 0,
+        "total": 177,
+        "courses": 5,
+        "courses_done": 0
+      },
+      {
+        "name": "Phase D",
+        "done": 0,
+        "total": 1302,
+        "courses": 37,
+        "courses_done": 0
+      },
+      {
+        "name": "Phase E (capstone)",
+        "done": 0,
+        "total": 11,
+        "courses": 1,
+        "courses_done": 0
+      },
+      {
+        "name": "Companions",
+        "done": 0,
+        "total": 96,
+        "courses": 4,
+        "courses_done": 0
+      }
+    ],
+    "open": [
+      {
+        "name": "English",
+        "done": 6,
+        "total": 53
+      },
+      {
+        "name": "Math",
+        "done": 5,
+        "total": 53
+      }
+    ],
+    "curriculum_href": "https://github.com/nobixy/the-noblett-repository",
+    "curriculum_label": "github.com/nobixy/the-noblett-repository"
+  },
+  "achievements": [],
+  "updated": "2026-10-18"
+}

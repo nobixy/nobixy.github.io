@@ -1,0 +1,30 @@
+{
+  "location": "Brandenburg, KY",
+  "show_email": false,
+  "links": [
+    {
+      "label": "LinkedIn",
+      "href": "https://www.linkedin.com/in/joe-noblett"
+    },
+    {
+      "label": "GitHub",
+      "href": "https://github.com/nobixy"
+    }
+  ],
+  "hide_experience": [],
+  "experience_overrides": {
+    "Shift Lead / Manager — McDonald's": {
+      "period": "Oct 2025 – Sep 2026 | Brandenburg, KY"
+    }
+  },
+  "writing_intro": [
+    "This is my daily writing practice. I write something every day, because writing is a skill I'm working to get better at, and right now I'm not a good writer.",
+    "Expect random pieces: things I learn while studying, short stories, and whatever's on my mind. Some will be rough. That's the point."
+  ],
+  "add_experience": [
+    {
+      "role": "Produce Clerk — Kroger",
+      "period": "Oct 2026 – Present"
+    }
+  ]
+}

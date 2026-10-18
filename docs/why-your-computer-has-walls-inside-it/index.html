@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why Your Computer Has Walls Inside It · Joseph Noblett</title>
+<meta name="description" content="Kernel space, user space, and why your computer hides things from you even when you&#x27;re the admin.">
+<link rel="canonical" href="https://nobixy.github.io/why-your-computer-has-walls-inside-it/">
+<meta property="og:title" content="Why Your Computer Has Walls Inside It">
+<meta property="og:description" content="Kernel space, user space, and why your computer hides things from you even when you&#x27;re the admin.">
+<meta property="og:url" content="https://nobixy.github.io/why-your-computer-has-walls-inside-it/">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/rss+xml" title="Joseph Noblett: writing" href="/feed.xml">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%232f7d4f%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-family=%22sans-serif%22 font-size=%2216%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22%3EJN%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="name" href="/">Joseph Noblett</a>
+  <nav><a href="/">Resume</a><a href="/writing/">Writing</a><a href="/feed.xml">RSS</a></nav>
+</header>
+<main>
+<article><h1>Why Your Computer Has Walls Inside It</h1><p class="meta"><time datetime="2026-10-16">October 16, 2026</time> · 2 min read</p><p>Have you ever wondered why computers have root users and admins? I have. Why is this system needed? Why does a computer hide its complex details from the user? It turns out the same idea runs through almost every complex system today. First I&rsquo;ll describe the two &ldquo;spaces&rdquo; on your Linux machine, then I&rsquo;ll explain why they&rsquo;re kept separate.</p>
+<h2>Two spaces</h2>
+<p>There are two main areas inside a Linux machine. <strong>Kernel space</strong> is the orchestration space for the whole operating system. The kernel can read, write, update and delete anything, and it&rsquo;s the only part that talks to the hardware directly. It acts as the interface between programs and the hardware.</p>
+<p><strong>User space</strong> is everything you control: folders, processes, GUIs and programs. It&rsquo;s the interface you use to talk to the kernel, which in turn talks to the hardware (memory and CPU).</p>
+<h2>Walls for safety</h2>
+<p>Having two spaces limits what a user can touch. You can&rsquo;t accidentally crash the whole system by typing the wrong command, because your programs never get direct access to the hardware. The kernel checks permissions on every request. Even the root user, the admin account that can do almost anything, runs in user space and still has to ask the kernel.</p>
+<h2>Walls for trust</h2>
+<p>Two spaces also help a machine manage multiple accounts. The kernel keeps track of which user owns what, so one person can&rsquo;t read or overwrite another person&rsquo;s private data, while users can still share resources to keep the overall load down. This is mainly a product of its time: computers used to be so expensive that people split up their time on them, called time-sharing. The machine had to manage many user profiles without corrupting or leaking anyone&rsquo;s data.</p>
+<h2>Walls that hide complexity</h2>
+<p>You don&rsquo;t need to know how bits travel from memory to the CPU. You just need to know that clicking a button pulls up your web browser. Everything comes down to abstractions. Engineers love to hide the details the end user doesn&rsquo;t need to see. The user just needs to know which inputs produce the outputs they want.</p>
+<p>Look at the first computers compared to now. We kept adding abstractions. Operating systems arrived to manage programs and processes as they grew with time and Moore&rsquo;s law. A program is many abstractions in one: it&rsquo;s built on system calls and other Unix commands. A web browser is a document viewer and a network client in one.</p>
+<h2>Why it matters</h2>
+<p>At the end of the day, these systems are set up to get as many people using computers as possible. Nobody wants to set up every piece of their computer like IKEA furniture. And remember: when these systems were first designed, they were still using time-sharing. Not everyone had a computer like we do today.</p></article><p class="back"><a href="/writing/">← All writing</a></p>
+</main>
+<footer class="site">Updated 2026-10-18 from my study dashboard. · <a href="https://github.com/nobixy">GitHub</a></footer>
+</body>
+</html>
