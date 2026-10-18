@@ -34,18 +34,15 @@
   },
   "welcome": {
     "intro": "I'm teaching myself electrical engineering and computer science from the ground up, while working full time. This homepage is where I show the work.",
-    "building": [
+    "one_line_why": "I've never finished anything I started. This is the one I finish.",
+    "goals": [
       [
         "A software engineering job",
-        "the first real milestone, and the one I'm aiming at now."
+        "the first real milestone, and the one I'm working toward now."
       ],
       [
         "A full EECS education",
         "the equivalent of MIT's 6-3 degree plus a master's: 54 courses and roughly 6,600 hours, from arithmetic and grammar up through systems, hardware and a capstone."
-      ],
-      [
-        "A long career building things",
-        "from student to engineer to staff, principal and one day CTO. Every step is earned with real skills, not titles."
       ],
       [
         "The habit of finishing",
@@ -70,6 +67,11 @@
         "When my energy has nowhere to go, it turns into beating myself up. When it goes into something bigger, it comes back."
       ]
     ],
-    "quote": "If my fuel goes to my purpose, then my purpose is going to fill my fuel."
+    "quote": "If my fuel goes to my purpose, then my purpose is going to fill my fuel.",
+    "keep_score": [
+      "Lessons and courses finished, counted from my study vault. The numbers on this site update themselves.",
+      "Writing every day, and publishing the pieces I'm proud of.",
+      "A skill ladder from student to principal engineer, scored by what I can actually do. These are benchmarks to measure myself against, not titles I'm chasing."
+    ]
   }
 }
