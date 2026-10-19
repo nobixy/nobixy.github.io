@@ -271,7 +271,7 @@ def resume_html(data: dict, posts: list[dict]) -> str:
             for phase in learning.get("phases", [])
         )
         out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>What I'm Learning</span></div><div class="panel-body">
-<p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, hardware and a capstone. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum -></a></p>
+<p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, AI, hardware and a capstone, studied as one sequence. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum -></a></p>
 <div class="stat-row"><div><strong>{learning["done"]:,}<small> / {learning["total"]:,}</small></strong><span>LESSONS COMPLETE</span></div><div><strong>{learning["courses_done"]}<small> / {learning["courses"]}</small></strong><span>COURSES FINISHED</span></div></div>
 <h3 class="subheading">OPEN COURSES</h3><ul class="progress">{open_courses}</ul>
 <details class="phase-details"><summary>SHOW ALL STUDY PHASES <span aria-hidden="true">[ + ]</span></summary><ul class="progress">{phases}</ul></details>
