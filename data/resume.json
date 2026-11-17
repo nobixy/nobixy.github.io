@@ -76,15 +76,15 @@
   },
   "learning": {
     "done": 11,
-    "total": 1913,
-    "courses": 54,
+    "total": 1934,
+    "courses": 55,
     "courses_done": 0,
     "phases": [
       {
         "name": "Phase A",
         "done": 11,
-        "total": 151,
-        "courses": 3,
+        "total": 172,
+        "courses": 4,
         "courses_done": 0
       },
       {
@@ -139,5 +139,5 @@
     "curriculum_label": "github.com/nobixy/the-noblett-repository"
   },
   "achievements": [],
-  "updated": "2026-10-18"
+  "updated": "2026-11-16"
 }
