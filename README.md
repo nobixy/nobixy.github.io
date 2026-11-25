@@ -9,6 +9,8 @@ Everything here is edited by hand now. The old Obsidian study dashboard and its 
 - `posts/YYYY-MM-DD-slug.md`: published writing.
 - `drafts/`: git-ignored, never built.
 - `build.py`: renders everything into `docs/`.
+- `admin_body.html` + `admin.js`: the Writer's Station at `/admin/`. Log on with a fine-grained GitHub token (this repo only, Contents: read and write). Drafts stay in that browser; Publish makes one commit with the post and its kind.
+- `.github/workflows/deploy.yml`: builds and deploys the site on every push to main, so the Writer's Station works from any device.
 - `write.py`: `new "Title" [Kind]`, `list`, `publish slug` (build, commit, then asks before pushing).
 
 Local preview: `python3 build.py && python3 -m http.server -d docs 8000`

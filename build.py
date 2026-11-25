@@ -24,6 +24,12 @@ from safe_markdown import render
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs"
 STYLE_VERSION = hashlib.sha256((ROOT / "style.css").read_bytes()).hexdigest()[:12]
+ADMIN_VERSION = hashlib.sha256((ROOT / "admin.js").read_bytes()).hexdigest()[:12]
+# The Writer's Station (/admin/) is a static shell: nothing secret lives in it. Saving and publishing need a
+# GitHub token only Joseph holds, and GitHub checks it on every request. This policy keeps the page to
+# its own scripts and the GitHub API, so nothing else on the page can ever see that token.
+ADMIN_CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; "
+             "connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'")
 SCRIPT_VERSION = hashlib.sha256((ROOT / "site.js").read_bytes()).hexdigest()[:12]
 SITE_URL = "https://nobixy.github.io"
 WPM = 220
@@ -107,7 +113,7 @@ def odometer(n: int, digits: int = 6) -> str:
 
 
 def page(title: str, body: str, data: dict, *, description: str = "", path: str = "/", page_class: str = "",
-         posts: list | None = None, noindex: bool = False) -> str:
+         posts: list | None = None, noindex: bool = False, head_extra: str = "") -> str:
     name = data["profile"]["name"]
     full = title if title == name else f"{title} | {name}"
     desc = description or data["profile"].get("headline", "")
@@ -165,6 +171,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000080%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffff00%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/style.css?v={STYLE_VERSION}">
 <script src="/site.js?v={SCRIPT_VERSION}" defer></script>
+{head_extra}
 <noscript><style>html.dialing-in main {{ animation: none; }}</style></noscript>
 </head>
 <body>
@@ -424,6 +431,7 @@ def build() -> None:
     write(".nojekyll", "")
     shutil.copy(ROOT / "style.css", OUT / "style.css")
     shutil.copy(ROOT / "site.js", OUT / "site.js")
+    shutil.copy(ROOT / "admin.js", OUT / "admin.js")
     shutil.copy(ROOT / "avatar.jpg", OUT / "avatar.jpg")
     write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
     write("writing/index.html", page("Writing", writing_hub(posts, settings), data, path="/writing/", page_class="archive-page",
@@ -446,6 +454,11 @@ def build() -> None:
 <div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">*</span><p>Thanks for reading.</p><a href="/writing/">See all writing -></a></footer></article>{pager}</div>
 <aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>More Writing</span><span aria-hidden="true"></span></div><div class="panel-body"><p class="eyebrow">Read these next:</p>{related}</div></div>{ring}<div class="aside-note">* MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
+    head = (f'<meta http-equiv="Content-Security-Policy" content="{ADMIN_CSP}">\n'
+            f'<meta name="referrer" content="no-referrer">\n<script src="/admin.js?v={ADMIN_VERSION}" defer></script>')
+    write("admin/index.html", page("Writer's Station", (ROOT / "admin_body.html").read_text(encoding="utf-8"), data,
+                                   path="/admin/", page_class="admin-page", description="Private writing desk.",
+                                   posts=posts, noindex=True, head_extra=head))
     write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",
                            description="Page not found.", posts=posts, noindex=True))
     write("feed/index.html", page("RSS feed", feed_page_html(posts), data, path="/feed/", page_class="feed-page",

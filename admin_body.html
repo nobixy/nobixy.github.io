@@ -1,0 +1,99 @@
+<section class="page-heading"><p class="eyebrow">You are here: Home &gt; Writer's Station</p>
+<h1>The Writer's <em>Station.</em><span aria-hidden="true">*</span></h1>
+<p>Draft first, fix later. Write it, sleep on it, read it out loud, then publish.</p></section>
+
+<section class="ws-login dialog" id="ws-login" aria-labelledby="ws-login-title">
+  <div class="dialog-title"><span id="ws-login-title">Log On to Writer's Station</span><span class="tb-buttons" aria-hidden="true"><b>X</b></span></div>
+  <form class="dialog-body ws-login-body" id="ws-login-form" autocomplete="off">
+    <span class="dialog-icon ws-key" aria-hidden="true">#</span>
+    <div>
+      <p>This site has no server, so the lock is your <b>GitHub token</b>. GitHub checks it on every save. Without it, this page can't change anything.</p>
+      <label for="ws-token">GitHub token:</label>
+      <input id="ws-token" type="password" spellcheck="false" autocomplete="off" placeholder="github_pat_..." required>
+      <label class="ws-check"><input id="ws-remember" type="checkbox"> Remember me on this computer</label>
+      <p class="ws-error" id="ws-login-error" role="alert" hidden></p>
+      <details class="ws-help"><summary>How do I get a token?</summary>
+        <ol><li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub: new fine-grained token</a>.</li>
+        <li>Repository access: <b>Only select repositories</b>, then pick <b>nobixy.github.io</b>.</li>
+        <li>Permissions: <b>Contents: Read and write</b>. Optional: <b>Actions: Read</b> (shows build progress).</li>
+        <li>Pick an expiry, generate it, and paste it here. Only you ever see it.</li></ol></details>
+    </div>
+  </form>
+  <div class="dialog-actions"><button class="dlg-btn" type="submit" form="ws-login-form">OK</button><a class="dlg-btn" href="/writing/">Cancel</a></div>
+</section>
+
+<div class="ws" id="ws" hidden>
+  <div class="ws-toolbar" role="toolbar" aria-label="Writer's Station">
+    <button type="button" class="tbtn" data-act="new"><span aria-hidden="true">+</span>New</button>
+    <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Open</button>
+    <button type="button" class="tbtn" data-act="save"><span aria-hidden="true">v</span>Save</button>
+    <span class="ws-sep" aria-hidden="true"></span>
+    <button type="button" class="tbtn ws-mode" data-mode="draft" aria-pressed="true"><span aria-hidden="true">~</span>Draft</button>
+    <button type="button" class="tbtn ws-mode" data-mode="revise" aria-pressed="false"><span aria-hidden="true">?</span>Revise</button>
+    <span class="ws-sep" aria-hidden="true"></span>
+    <button type="button" class="tbtn" data-act="sprint"><span aria-hidden="true">@</span>Sprint</button>
+    <button type="button" class="tbtn" data-act="aloud"><span aria-hidden="true">"</span>Read aloud</button>
+    <button type="button" class="tbtn" data-act="focus"><span aria-hidden="true">#</span>Full screen</button>
+    <span class="ws-sep" aria-hidden="true"></span>
+    <button type="button" class="tbtn ws-publish" data-act="publish"><span aria-hidden="true">!</span>Publish</button>
+    <button type="button" class="tbtn" data-act="logout"><span aria-hidden="true">X</span>Log off</button>
+  </div>
+
+  <div class="ws-grid">
+    <section class="ws-paper panel" aria-label="Editor">
+      <div class="section-bar"><span id="ws-doc-name">Untitled - Draft</span><span id="ws-saved">not saved yet</span></div>
+      <div class="ws-meta">
+        <label>Title <input id="ws-title" type="text" maxlength="140" placeholder="Give it a title"></label>
+        <label>One-line summary <input id="ws-desc" type="text" maxlength="200" placeholder="Shows in the list and in link previews"></label>
+        <label class="ws-kind-label">Kind <input id="ws-kind" list="ws-kinds" placeholder="Essay"><datalist id="ws-kinds"></datalist></label>
+      </div>
+      <div class="ws-format" role="toolbar" aria-label="Formatting">
+        <button type="button" data-fmt="h2" title="Heading">H2</button><button type="button" data-fmt="b" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-fmt="i" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-fmt="q" title="Quote">&gt;</button><button type="button" data-fmt="ul" title="List">*</button><button type="button" data-fmt="link" title="Link (Ctrl+K)">link</button><button type="button" data-fmt="code" title="Code">`c`</button>
+        <span class="ws-hint" id="ws-hint">Draft mode: just write. Checks wait for Revise.</span>
+      </div>
+      <textarea id="ws-body" spellcheck="false" aria-label="Your writing" placeholder="Start anywhere. Don't fix anything yet. Keep the pen moving."></textarea>
+    </section>
+
+    <aside class="ws-side" aria-label="Revision tools">
+      <div class="kind-tabs ws-tabs" role="tablist">
+        <button type="button" class="kind-tab" role="tab" aria-pressed="true" data-tab="feedback">Feedback</button>
+        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="preview">Preview</button>
+        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="outline">Outline</button>
+        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="history">History</button>
+      </div>
+      <div class="ws-pane" id="ws-pane-feedback" role="tabpanel"></div>
+      <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" hidden></div>
+      <div class="ws-pane" id="ws-pane-outline" role="tabpanel" hidden></div>
+      <div class="ws-pane" id="ws-pane-history" role="tabpanel" hidden></div>
+    </aside>
+  </div>
+
+  <div class="ws-bottom">
+    <section class="panel ws-log"><div class="section-bar"><span>Writing Log</span><span>this computer only</span></div><div class="panel-body" id="ws-log"></div></section>
+    <section class="panel ws-tips"><div class="section-bar"><span>Rules of the House</span></div><div class="panel-body"><ol>
+      <li><b>Drafting and revising are different jobs.</b> Draft mode hides every check so you can get it down.</li>
+      <li><b>Short, regular sessions beat binges.</b> A 15-30 min sprint, most days.</li>
+      <li><b>Freewrite when stuck.</b> Turn on "no backspace" and keep the pen moving.</li>
+      <li><b>Revise big before small.</b> Check the Outline first, then the sentences.</li>
+      <li><b>Read it out loud.</b> Your ear catches what your eye skips.</li>
+      <li><b>Orwell:</b> short words, cut what you can, active voice, no worn-out phrases. Break any rule before writing something ugly.</li>
+    </ol></div></section>
+  </div>
+  <div class="ws-statusbar" role="status"><span id="ws-count">0 words</span><span id="ws-read">0 min read</span><span id="ws-session">+0 this session</span><span id="ws-timer">no sprint</span><span id="ws-msg" class="ws-msg">Ready.</span></div>
+</div>
+
+<dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Open</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body"><h3 class="subheading">DRAFTS ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
+  <h3 class="subheading">PUBLISHED (EDIT LIVE)</h3><ul class="ws-list" id="ws-open-posts"><li>Loading...</li></ul></div></dialog>
+
+<dialog class="ws-dialog" id="ws-sprint"><div class="dialog-title"><span>Writing Sprint</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body"><p>Pick a length. Write until the bell. Don't edit.</p>
+  <p class="ws-choices"><button type="button" class="dlg-btn" data-sprint="10">10 min</button><button type="button" class="dlg-btn" data-sprint="15">15 min</button><button type="button" class="dlg-btn" data-sprint="25">25 min</button><button type="button" class="dlg-btn" data-sprint="0">Stop</button></p>
+  <label class="ws-check"><input type="checkbox" id="ws-nobs"> Freewrite: no backspace during the sprint</label>
+  <label class="ws-check">Word goal for this sprint <input type="number" id="ws-goal" min="0" step="50" value="250"></label></div></dialog>
+
+<dialog class="ws-dialog ws-dialog-wide" id="ws-publish"><div class="dialog-title"><span>Publish to nobixy.github.io</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body"><ul class="ws-checklist" id="ws-checklist"></ul>
+  <p class="ws-pub-where" id="ws-pub-where"></p>
+  <p class="ws-choices"><button type="button" class="dlg-btn" id="ws-pub-go">Publish it</button><button type="button" class="dlg-btn" data-close>Not yet</button></p>
+  <p class="ws-pub-status" id="ws-pub-status" role="status"></p></div></dialog>
