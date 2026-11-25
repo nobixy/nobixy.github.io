@@ -57,11 +57,13 @@
     <aside class="ws-side" aria-label="Revision tools">
       <div class="kind-tabs ws-tabs" role="tablist">
         <button type="button" class="kind-tab" role="tab" aria-pressed="true" data-tab="feedback">Feedback</button>
+        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="marked">Marked</button>
         <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="preview">Preview</button>
         <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="outline">Outline</button>
         <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="history">History</button>
       </div>
       <div class="ws-pane" id="ws-pane-feedback" role="tabpanel"></div>
+      <div class="ws-pane" id="ws-pane-marked" role="tabpanel" hidden></div>
       <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" hidden></div>
       <div class="ws-pane" id="ws-pane-outline" role="tabpanel" hidden></div>
       <div class="ws-pane" id="ws-pane-history" role="tabpanel" hidden></div>

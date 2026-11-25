@@ -166,21 +166,35 @@
     while ((m = re.exec(text))) { if (!m[0]) { re.lastIndex++; continue; } if (m[0].trim()) out.push({ start: m.index + m[0].search(/\S/), text: m[0].trim() }); }
     return out;
   }
-  function analyze() {
-    const raw = el.body.value, text = mask(raw);
+  // Four families, each a fixed color (validated for color blindness: scripts/validate_palette.js passes),
+  // and every mark also carries a text label, so color is never the only cue.
+  const FAMILIES = {
+    Sentences: { color: '#0066cc', types: ['Very long sentence', 'Long sentence', 'Big paragraph'], what: 'length and shape' },
+    Clarity: { color: '#cc6600', types: ['Passive voice', 'Long word', 'Worn-out phrase'], what: "Orwell's rules 1, 2 and 4" },
+    Clutter: { color: '#009966', types: ['Filler', 'Adverb'], what: 'words you can cut' },
+    Mistakes: { color: '#993399', types: ['Doubled word', "its / it's"], what: 'probably typos' },
+  };
+  const FAMILY_OF = {};
+  for (const [f, d] of Object.entries(FAMILIES)) for (const t of d.types) FAMILY_OF[t] = f;
+  const SENTENCE_LEVEL = new Set(['Very long sentence', 'Long sentence', 'Big paragraph']);
+  const STOP = new Set("a an the and or but if so of to in on at by for with from as is are was were be been being am i me my we our you your he she it its they them their this that these those there here what which who whom when where why how not no do does did done have has had will would can could should may might must just very really than then too also into out up down over about after before again more most some any all each few other such only own same both get got one like even it's i'm don't can't didn't i've i'll that's there's you're they're them him her his hers us much many way well back now still because while through off".split(' '));
+  const issueKey = (i) => `${i.type}|${i.text.toLowerCase().trim()}`;
+
+  function measure(raw) {
+    const text = mask(raw);
     const issues = [];
-    const add = (type, weight, start, len, hint) => issues.push({ type, weight, start, end: start + len, hint, text: raw.slice(start, start + len) });
-    const sents = sentences(text);
+    const add = (type, weight, start, len, hint) => issues.push({ type, family: FAMILY_OF[type], weight, start, end: start + len, hint, text: raw.slice(start, start + len) });
+    const sents = sentences(text).map((s) => ({ ...s, n: (s.text.match(/[A-Za-z0-9'-]+/g) || []).length })).filter((s) => s.n > 0);
     let wc = 0, syl = 0;
     for (const s of sents) {
       const ws_ = s.text.match(/[A-Za-z0-9'-]+/g) || [];
       wc += ws_.length; syl += ws_.reduce((a, w) => a + syllables(w), 0);
-      if (ws_.length > 35) add('Very long sentence', 5, s.start, s.text.length, `${ws_.length} words. Split it in two.`);
-      else if (ws_.length > 25) add('Long sentence', 3, s.start, s.text.length, `${ws_.length} words. Can it be shorter?`);
+      if (s.n > 35) add('Very long sentence', 5, s.start, s.text.length, `${s.n} words. Split it in two.`);
+      else if (s.n > 25) add('Long sentence', 3, s.start, s.text.length, `${s.n} words. Can it be shorter?`);
     }
     const lower = text.toLowerCase();
     for (const c of CLICHES) for (const m of lower.matchAll(new RegExp(`\\b${reEsc(c)}\\b`, 'g'))) add('Worn-out phrase', 4, m.index, c.length, 'Orwell rule 1: say it your own way.');
-    for (const m of text.matchAll(/\b(\w+)\s+\1\b/gi)) if (!/^(had|that|is)$/i.test(m[1])) add('Doubled word', 5, m.index, m[0].length, `"${m[1]} ${m[1]}"`);
+    for (const m of text.matchAll(/\b(\w+)\s+\1\b/gi)) if (!/^(had|that|is)$/i.test(m[1])) add('Doubled word', 5, m.index, m[0].length, 'Typed twice? Delete one.');
     for (const m of text.matchAll(/\bits (a|the|not|been|going|really|just|very|so|time)\b/gi)) add("its / it's", 4, m.index, m[0].length, "Did you mean it's (it is)?");
     for (const m of text.matchAll(/\bit's (own|self)\b/gi)) add("its / it's", 4, m.index, m[0].length, 'Did you mean its?');
     for (const m of text.matchAll(PASSIVE)) add('Passive voice', 3, m.index, m[0].length, 'Orwell rule 4: who did it? Make them the subject.');
@@ -188,22 +202,234 @@
     for (const f of FILLERS) for (const m of lower.matchAll(new RegExp(`\\b${reEsc(f)}\\b`, 'g'))) add('Filler', 2, m.index, f.length, 'Orwell rule 3: cut it and reread.');
     for (const m of text.matchAll(/\b[A-Za-z]+ly\b/g)) if (!NOT_ADVERBS.has(m[0].toLowerCase())) add('Adverb', 1, m.index, m[0].length, 'Would a stronger verb do the job?');
     let pos = 0;
-    for (const p of raw.split(/\n\s*\n/)) { const n = words(p); if (n > 150 && !p.trim().startsWith('```')) add('Big paragraph', 2, raw.indexOf(p, pos), Math.min(p.length, 60), `${n} words. Break it up.`); pos += p.length; }
+    for (const p of raw.split(/\n\s*\n/)) { const at = raw.indexOf(p, pos); const n = words(p); if (n > 150 && !p.trim().startsWith('```')) add('Big paragraph', 2, at, Math.min(p.length, 60), `${n} words. Break it up.`); pos = at + p.length; }
 
-    const grade = wc ? 0.39 * (wc / Math.max(1, sents.length)) + 11.8 * (syl / wc) - 15.59 : 0;
-    const counts = issues.reduce((a, i) => ((a[i.type] = (a[i.type] || 0) + 1), a), {});
-    issues.sort((a, b) => b.weight - a.weight || a.start - b.start);
-    const item = (i) => `<li><button type="button" class="ws-issue" data-start="${i.start}" data-end="${i.end}"><b>${esc(i.type)}</b> <q>${esc(i.text.length > 70 ? i.text.slice(0, 70) + '...' : i.text)}</q><small>${esc(i.hint)}</small></button></li>`;
-    const top = issues.slice(0, 5), rest = issues.slice(5);
-    $('#ws-pane-feedback').innerHTML = !wc ? '<p class="ws-empty">Write something first. Feedback shows up here in Revise mode.</p>' : `
-      <div class="stat-row ws-stats"><div><strong>${grade > 0 ? grade.toFixed(1) : '-'}</strong><span>GRADE LEVEL ${grade <= 9 ? '(CLEAR)' : '(AIM FOR 9 OR LESS)'}</span></div><div><strong>${(wc / Math.max(1, sents.length)).toFixed(0)}</strong><span>AVG WORDS / SENTENCE</span></div></div>
-      <p class="ws-counts">${Object.entries(counts).map(([k, v]) => `<span>${esc(k)}: ${v}</span>`).join('') || '<span>Nothing flagged. Read it aloud next.</span>'}</p>
-      ${top.length ? `<h3 class="subheading">FIX THESE FIRST</h3><ul class="ws-issues">${top.map(item).join('')}</ul>` : ''}
+    const ns = Math.max(1, sents.length);
+    const tokens = lower.match(/[a-z][a-z'-]*/g) || [];
+    const content = tokens.filter((w) => w.length > 2 && !STOP.has(w));
+    const freq = new Map();
+    for (const w of content) freq.set(w, (freq.get(w) || 0) + 1);
+    const top = [...freq].filter(([, c]) => c >= 3).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const openers = new Map();
+    for (const s of sents) { const w = (s.text.toLowerCase().match(/[a-z][a-z']*/) || [''])[0]; if (w) openers.set(w, (openers.get(w) || 0) + 1); }
+    const lens = sents.map((s) => s.n);
+    const mean = wc / ns;
+    const sd = Math.sqrt(lens.reduce((a, n) => a + (n - mean) ** 2, 0) / ns);
+    return {
+      issues, sents, wc, ns, sd,
+      grade: wc ? 0.39 * mean + 11.8 * (syl / wc) - 15.59 : 0,
+      ease: wc ? 206.835 - 1.015 * mean - 84.6 * (syl / wc) : 0,
+      avg: mean,
+      top, openers: [...openers].sort((a, b) => b[1] - a[1]).slice(0, 3),
+      variety: content.length ? new Set(content).size / content.length : 0,
+    };
+  }
+  const per100 = (count, wc) => (wc ? (count * 100) / wc : 0);
+  function familyRates(issues, wc) {
+    const out = {};
+    for (const f of Object.keys(FAMILIES)) out[f] = per100(issues.filter((i) => i.family === f).length, wc);
+    return out;
+  }
+
+  // Your own published writing is the yardstick: averaged once, cached for 12 hours.
+  let baseline = store.get('ws.baseline', null);
+  async function loadBaseline() {
+    if (baseline && Date.now() - baseline.t < 12 * 3600000) return;
+    try {
+      const files = (await gh(`/repos/${REPO}/contents/posts?ref=main`)).filter((f) => f.name.endsWith('.md')).sort((a, b) => b.name.localeCompare(a.name)).slice(0, 12);
+      const ms = [];
+      for (const f of files) { const [, body] = frontMatter(await readFile(f.path)); ms.push(measure(body)); }
+      if (!ms.length) return;
+      const avg = (fn) => ms.reduce((a, m) => a + fn(m), 0) / ms.length;
+      const fam = {};
+      for (const f of Object.keys(FAMILIES)) fam[f] = avg((m) => familyRates(m.issues, m.wc)[f]);
+      baseline = { t: Date.now(), n: ms.length, grade: avg((m) => m.grade), ease: avg((m) => m.ease), avg: avg((m) => m.avg), per100: avg((m) => per100(m.issues.length, m.wc)), fam };
+      store.set('ws.baseline', baseline);
+      if (mode === 'revise') analyze();
+    } catch { /* the yardstick is a bonus; feedback works without it */ }
+  }
+
+  // ------------------------------------------------------------------ charts (inline SVG, flat 1996 colors)
+  const SERIOUS = '#cc3300', INK = '#333333', MUTED = '#666699', GRID = '#cccccc';
+  const tipAttr = (t) => `data-tip="${esc(t)}"`;
+  function rhythmChart(m) {
+    const W = 320, H = 120, L = 24, R = 4, T = 10, B = 14, n = m.sents.length;
+    const max = Math.max(30, ...m.sents.map((s) => s.n));
+    const y = (v) => T + (H - T - B) * (1 - v / max);
+    const bw = (W - L - R) / n, gap = bw > 5 ? 2 : bw > 2 ? 1 : 0;
+    let bars = '', hits = '';
+    m.sents.forEach((s, i) => {
+      const x = L + i * bw;
+      bars += `<rect x="${(x + gap / 2).toFixed(1)}" y="${y(s.n).toFixed(1)}" width="${Math.max(0.8, bw - gap).toFixed(1)}" height="${(y(0) - y(s.n)).toFixed(1)}" fill="${s.n > 25 ? SERIOUS : '#000080'}"/>`;
+      hits += `<rect class="ws-hit" x="${x.toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${H - T - B}" fill="transparent" data-start="${s.start}" data-end="${s.start + s.text.length}" ${tipAttr(`Sentence ${i + 1}: ${s.n} words. "${s.text.slice(0, 60)}${s.text.length > 60 ? '...' : ''}"`)}/>`;
+    });
+    return `<svg class="ws-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Words per sentence, in order. ${m.sents.filter((s) => s.n > 25).length} sentences over 25 words.">
+      <line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="${INK}"/>
+      <line x1="${L}" x2="${W - R}" y1="${y(25)}" y2="${y(25)}" stroke="${SERIOUS}" stroke-dasharray="4 3"/>
+      <text x="${L - 4}" y="${y(25) + 3}" text-anchor="end" class="ws-ax">25</text>
+      <text x="${L - 4}" y="${y(max) + 6}" text-anchor="end" class="ws-ax">${max}</text>
+      <text x="${L - 4}" y="${y(0) + 3}" text-anchor="end" class="ws-ax">0</text>
+      ${bars}${hits}
+      <text x="${L}" y="${H - 2}" class="ws-ax">first sentence</text><text x="${W - R}" y="${H - 2}" text-anchor="end" class="ws-ax">last</text>
+    </svg>`;
+  }
+  function heatStrip(issues, len) {
+    const W = 320, L = 62, rowH = 9, fams = Object.keys(FAMILIES), H = fams.length * rowH + 4;
+    let out = '';
+    fams.forEach((f, r) => {
+      const yy = 2 + r * rowH;
+      out += `<text x="${L - 4}" y="${yy + 7}" text-anchor="end" class="ws-ax">${f}</text><rect x="${L}" y="${yy}" width="${W - L}" height="${rowH - 2}" fill="#eeeeee"/>`;
+      for (const i of issues.filter((x) => x.family === f)) {
+        const x = L + (i.start / Math.max(1, len)) * (W - L);
+        out += `<rect x="${x.toFixed(1)}" y="${yy}" width="2.5" height="${rowH - 2}" fill="${FAMILIES[f].color}"/>`
+             + `<rect class="ws-hit" x="${(x - 3).toFixed(1)}" y="${yy}" width="8" height="${rowH - 2}" fill="transparent" data-start="${i.start}" data-end="${i.end}" ${tipAttr(`${i.type}: "${i.text.slice(0, 50)}"`)}/>`;
+      }
+    });
+    return `<svg class="ws-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Where in the piece each kind of flag sits, start to end">${out}</svg>
+      <p class="ws-axis-row"><span>start of piece</span><span>end</span></p>`;
+  }
+  const snapCache = new Map();
+  function progressChart() {
+    const pts = cur.snapshots.map((s) => {
+      if (!snapCache.has(s.t)) { const m = measure(s.body); snapCache.set(s.t, { t: s.t, r: per100(m.issues.length, m.wc), w: m.wc }); }
+      return snapCache.get(s.t);
+    });
+    const live = measure(el.body.value);
+    pts.push({ t: Date.now(), r: per100(live.issues.length, live.wc), w: live.wc, now: true });
+    if (pts.length < 2) return '<p class="ws-note">Revision progress shows up after your first snapshot (every 5 min, or press Save).</p>';
+    const W = 320, H = 110, L = 24, R = 10, T = 10, B = 14;
+    const max = Math.max(2, ...pts.map((p) => p.r)) * 1.1;
+    const x = (i) => L + (i / (pts.length - 1)) * (W - L - R), y = (v) => T + (H - T - B) * (1 - v / max);
+    const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.r).toFixed(1)}`).join('');
+    const dots = pts.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p.r).toFixed(1)}" r="4" fill="${p.now ? '#ffcc00' : '#000080'}" stroke="#ffffff" stroke-width="2"/>`
+      + `<rect class="ws-hit ws-hit-pt" x="${(x(i) - 8).toFixed(1)}" y="${T}" width="16" height="${H - T - B}" fill="transparent" ${tipAttr(`${p.now ? 'Now' : new Date(p.t).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: ${p.r.toFixed(1)} flags per 100 words, ${p.w} words`)}/>`).join('');
+    const base = baseline ? `<line x1="${L}" x2="${W - R}" y1="${y(Math.min(baseline.per100, max))}" y2="${y(Math.min(baseline.per100, max))}" stroke="${MUTED}" stroke-dasharray="2 3"/><text x="${W - R}" y="${y(Math.min(baseline.per100, max)) - 3}" text-anchor="end" class="ws-ax">your published avg</text>` : '';
+    const first = pts[0].r, last = pts[pts.length - 1].r;
+    return `<svg class="ws-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Flags per 100 words across revisions, from ${first.toFixed(1)} to ${last.toFixed(1)}">
+      <line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="${INK}"/>
+      <text x="${L - 4}" y="${y(0) + 3}" text-anchor="end" class="ws-ax">0</text><text x="${L - 4}" y="${y(max) + 6}" text-anchor="end" class="ws-ax">${max.toFixed(0)}</text>
+      ${base}<path d="${path}" fill="none" stroke="#000080" stroke-width="2"/>${dots}
+      <text x="${L}" y="${H - 2}" class="ws-ax">first snapshot</text><text x="${W - R}" y="${H - 2}" text-anchor="end" class="ws-ax">now</text></svg>
+      <p class="ws-caption">${last < first ? `Down from <b>${first.toFixed(1)}</b> to <b>${last.toFixed(1)}</b> flags per 100 words. That's revision working.` : last > first ? `Up from <b>${first.toFixed(1)}</b> to <b>${last.toFixed(1)}</b> per 100 words. New writing adds flags. That's fine while drafting.` : `Flat at <b>${last.toFixed(1)}</b> per 100 words.`}</p>`;
+  }
+
+  function tile(label, value, sub, base, better, fmt = (v) => v.toFixed(1)) {
+    let cmp = '<small class="ws-cmp">no published average yet</small>';
+    if (base != null) {
+      const d = value - base, good = better === 'lower' ? d <= 0 : d >= 0;
+      cmp = Math.abs(d) < 0.05 ? `<small class="ws-cmp">same as your published avg</small>` : `<small class="ws-cmp ${good ? 'up' : 'down'}">${d > 0 ? '^' : 'v'} ${fmt(Math.abs(d))} ${d > 0 ? 'above' : 'below'} your avg (${fmt(base)})</small>`;
+    }
+    return `<div class="ws-tile"><span class="ws-tile-label">${label}</span><strong>${fmt(value)}</strong><span class="ws-tile-sub">${sub}</span>${cmp}</div>`;
+  }
+  function gradeGauge(g) {
+    const pct = Math.max(0, Math.min(100, (g / 16) * 100));
+    return `<div class="ws-gauge" role="img" aria-label="Grade level ${g.toFixed(1)} on a 0 to 16 scale; 9 or less is clear"><span class="ws-gauge-ok"></span><i style="left:${pct}%"></i></div><p class="ws-axis-row"><span>0 easy</span><span>9</span><span>16 hard</span></p>`;
+  }
+
+  let famFilter = new Set(Object.keys(FAMILIES));
+  let lastMeasure = null;
+  function analyze() {
+    const m = measure(el.body.value);
+    const ignored = new Set((cur && cur.ignored) || []);
+    const all = m.issues;
+    const issues = all.filter((i) => !ignored.has(issueKey(i)));
+    lastMeasure = { ...m, issues };
+    const pane = $('#ws-pane-feedback');
+    if (!m.wc) { pane.innerHTML = '<p class="ws-empty">Write something first. Feedback shows up here in Revise mode.</p>'; renderMarked(); renderOutline(); renderPreview(); renderHistory(); return; }
+    const rate = per100(issues.length, m.wc), fam = familyRates(issues, m.wc);
+    const shown = issues.filter((i) => famFilter.has(i.family)).sort((a, b) => b.weight - a.weight || a.start - b.start);
+    const groups = [];
+    const byKey = new Map();
+    for (const i of shown) {
+      const k = issueKey(i);
+      if (!byKey.has(k)) { const g = { ...i, occ: [] }; byKey.set(k, g); groups.push(g); }
+      byKey.get(k).occ.push(`${i.start}-${i.end}`);
+    }
+    const item = (i) => `<li class="ws-item"><button type="button" class="ws-issue" data-start="${i.start}" data-end="${i.end}" data-occ="${i.occ.join(',')}"><span class="ws-issue-head"><span class="ws-chip" style="background:${FAMILIES[i.family].color}" aria-hidden="true"></span><b>${esc(i.type)}</b>${i.occ.length > 1 ? `<span class="ws-times">x${i.occ.length}</span>` : ''}</span><q>${esc(i.text.length > 70 ? i.text.slice(0, 70) + '...' : i.text)}</q><small>${esc(i.hint)}</small></button><button type="button" class="ws-ignore" data-ignore="${esc(issueKey(i))}" title="Ignore every one of these (for this piece)">ignore</button></li>`;
+    const top = groups.slice(0, 5), rest = groups.slice(5);
+    const famMax = Math.max(1, ...Object.values(fam), ...(baseline ? Object.values(baseline.fam) : [0]));
+    const famRows = Object.entries(FAMILIES).map(([f, d]) => {
+      const count = issues.filter((i) => i.family === f).length;
+      const b = baseline ? baseline.fam[f] : null;
+      return `<button type="button" class="ws-fam" data-fam="${f}" aria-pressed="${famFilter.has(f)}" ${tipAttr(`${f} (${d.what}): ${count} flags, ${fam[f].toFixed(1)} per 100 words${b != null ? `. Your published average: ${b.toFixed(1)}` : ''}. Click to show or hide in the list.`)}>
+        <span class="ws-fam-name"><span class="ws-chip" style="background:${d.color}" aria-hidden="true"></span>${f}</span>
+        <span class="ws-fam-track"><span class="ws-fam-bar" style="width:${(fam[f] / famMax) * 100}%;background:${d.color}"></span>${b != null ? `<span class="ws-fam-base" style="left:${(b / famMax) * 100}%"></span>` : ''}</span>
+        <span class="ws-fam-num">${count} <small>(${fam[f].toFixed(1)})</small></span></button>`;
+    }).join('');
+    const over = m.sents.filter((s) => s.n > 25).length;
+    const lens = m.sents.map((s) => s.n);
+    const rhythmNote = m.ns >= 6 && m.sd < 4 ? '<b>Same-y rhythm:</b> most sentences are about the same length. Drop in a short one. Then a long one.' : over ? `<b>${over}</b> sentence${over > 1 ? 's' : ''} over 25 words (red). Longest: ${Math.max(...lens)}. Shortest: ${Math.min(...lens)}.` : `Good mix. Longest: ${Math.max(...lens)} words, shortest: ${Math.min(...lens)}.`;
+    const [op, opc] = m.openers[0] || ['', 0];
+    const openerNote = m.ns >= 6 && opc / m.ns > 0.25 ? `<p class="ws-caption"><b>${opc} of ${m.ns}</b> sentences start with "${esc(op)}". Vary how they open.</p>` : '';
+    const topMax = m.top.length ? m.top[0][1] : 1;
+    pane.innerHTML = `
+      <div class="ws-tiles">
+        <div class="ws-tile ws-tile-wide"><span class="ws-tile-label">GRADE LEVEL</span><strong>${m.grade > 0 ? m.grade.toFixed(1) : '-'}</strong><span class="ws-tile-sub">${m.grade <= 9 ? 'Clear. Most adults read this easily.' : 'Dense. Aim for 9 or less.'}</span>${gradeGauge(Math.max(0, m.grade))}${baseline ? tile('', m.grade, '', baseline.grade, 'lower').match(/<small[\s\S]*<\/small>/)[0] : ''}</div>
+        ${tile('READING EASE', Math.max(0, m.ease), '0-100, higher is easier', baseline && baseline.ease, 'higher', (v) => v.toFixed(0))}
+        ${tile('WORDS / SENTENCE', m.avg, 'average', baseline && baseline.avg, 'lower')}
+        ${tile('FLAGS / 100 WORDS', rate, `${issues.length} flags in ${m.wc} words`, baseline && baseline.per100, 'lower')}
+        ${tile('WORD VARIETY', m.variety * 100, 'different words / all words (minus the, and, is...)', null, 'higher', (v) => `${v.toFixed(0)}%`).replace('<small class="ws-cmp">no published average yet</small>', '')}
+      </div>
+      ${baseline ? `<p class="ws-note">Compared with the average of your ${baseline.n} published pieces.</p>` : ''}
+
+      <h3 class="subheading">SENTENCE RHYTHM</h3>${rhythmChart(m)}<p class="ws-caption">${rhythmNote}</p>${openerNote}
+
+      <h3 class="subheading">FLAGS BY KIND <small>(per 100 words, | = your avg)</small></h3><div class="ws-fams">${famRows}</div>
+
+      <h3 class="subheading">WHERE THEY ARE</h3>${heatStrip(issues, el.body.value.length)}
+
+      <h3 class="subheading">FIX THESE FIRST</h3>
+      ${top.length ? `<ul class="ws-issues">${top.map(item).join('')}</ul>` : '<p class="ws-empty">Nothing flagged here. Read it aloud next.</p>'}
       ${rest.length ? `<details class="phase-details"><summary>EVERYTHING ELSE (${rest.length}) <span aria-hidden="true">[ + ]</span></summary><ul class="ws-issues">${rest.map(item).join('')}</ul></details>` : ''}
+      ${ignored.size ? `<p class="ws-note">${ignored.size} ignored for this piece. <button type="button" class="ws-linkbtn" data-unignore>Show them again</button></p>` : ''}
+
+      <h3 class="subheading">REVISION PROGRESS</h3>${progressChart()}
+
+      ${m.top.length ? `<h3 class="subheading">WORDS YOU LEAN ON</h3><ul class="ws-words">${m.top.map(([w, c]) =>
+        `<li><button type="button" class="ws-word" data-word="${esc(w)}" ${tipAttr(`"${w}" appears ${c} times. Click to step through them.`)}><span>${esc(w)}</span><span class="ws-word-track"><span style="width:${(c / topMax) * 100}%"></span></span><span class="ws-word-num">${c}</span></button></li>`).join('')}</ul>
+        <p class="ws-caption">Repeats aren't wrong. But if one word keeps showing up, try a synonym or cut a few.</p>` : ''}
+
       <p class="ws-note">These are hints, not rules. Orwell's rule 6: break any of them before you write something ugly.</p>`;
-    renderOutline(); renderPreview(); renderHistory();
+    renderMarked(); renderOutline(); renderPreview(); renderHistory();
   }
   const analyzeSoon = debounce(analyze, 400);
+
+  // The piece with every flag marked in place: blue tint for long sentences, colored underlines for the rest.
+  function renderMarked() {
+    const raw = el.body.value, pane = $('#ws-pane-marked');
+    if (!pane) return;
+    const issues = (lastMeasure && lastMeasure.issues) || [];
+    if (!raw.trim()) { pane.innerHTML = '<p class="ws-empty">Nothing to mark yet.</p>'; return; }
+    const cuts = new Set([0, raw.length]);
+    for (const i of issues) { cuts.add(i.start); cuts.add(i.end); }
+    const pts = [...cuts].sort((a, b) => a - b);
+    let html = '';
+    for (let k = 0; k < pts.length - 1; k++) {
+      const a = pts[k], b = pts[k + 1], seg = esc(raw.slice(a, b));
+      const on = issues.filter((i) => i.start <= a && i.end >= b);
+      if (!on.length) { html += seg; continue; }
+      const long = on.find((i) => SENTENCE_LEVEL.has(i.type));
+      const word = on.filter((i) => !SENTENCE_LEVEL.has(i.type)).sort((x, y) => y.weight - x.weight)[0];
+      const top = word || long;
+      const style = `${long ? 'background:#ddeeff;' : ''}${word ? `border-bottom:3px solid ${FAMILIES[word.family].color};` : ''}`;
+      html += `<span class="ws-mark" style="${style}" data-start="${top.start}" data-end="${top.end}" ${tipAttr(on.map((i) => `${i.type}: ${i.hint}`).join(' | '))}>${seg}</span>`;
+    }
+    pane.innerHTML = `<p class="ws-legend">${Object.entries(FAMILIES).map(([f, d]) => `<span><i style="background:${d.color}"></i>${f}</span>`).join('')}<span><i class="ws-legend-tint"></i>Long sentence</span></p><div class="ws-marked">${html}</div>`;
+  }
+
+  // One tooltip for every chart and mark in the side panel.
+  const tip = document.createElement('div');
+  tip.className = 'ws-tip'; tip.hidden = true; document.body.appendChild(tip);
+  document.addEventListener('mouseover', (e) => {
+    const t = e.target instanceof Element && e.target.closest('.ws-side [data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip'); tip.hidden = false;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (tip.hidden) return;
+    const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+    tip.style.left = `${x}px`; tip.style.top = `${e.clientY + 16}px`;
+  });
 
   function jump(start, end) {
     el.body.focus();
@@ -454,6 +680,7 @@
     } catch { kindsMap = {}; }
     $('#ws-kinds').innerHTML = [...new Set(['Story', 'Essay', 'Study notes', 'Personal', ...Object.values(kindsMap)])].map((k) => `<option value="${esc(k)}">`).join('');
     say('Logged on. Drafts save on this computer as you type. Nothing goes public until Publish.');
+    loadBaseline();
   }
 
   for (const k of ['title', 'desc', 'kind']) el[k].addEventListener('input', () => { autosave(); refresh(); });
@@ -490,7 +717,25 @@
       $$('.ws-pane').forEach((p) => { p.hidden = p.id !== `ws-pane-${tab.dataset.tab}`; });
       analyze();
     }
-    if (issue) jump(+issue.dataset.start, +issue.dataset.end);
+    const spot = issue || t.closest('.ws-hit, .ws-mark');
+    if (spot && spot.dataset.occ && spot.dataset.occ.includes(',')) {
+      const occ = spot.dataset.occ.split(',').map((x) => x.split('-').map(Number));
+      const k = Math.max(0, occ.findIndex(([a]) => a >= el.body.selectionEnd));
+      const [a, b] = occ[occ.findIndex(([a2]) => a2 >= el.body.selectionEnd)] || occ[0];
+      jump(a, b); say(`${k + 1} of ${occ.length}. Click again for the next one.`);
+    } else if (spot) jump(+spot.getAttribute('data-start'), +spot.getAttribute('data-end'));
+    const famBtn = t.closest('[data-fam]');
+    if (famBtn) { const f = famBtn.dataset.fam; if (famFilter.has(f) && famFilter.size > 1) famFilter.delete(f); else famFilter.add(f); analyze(); }
+    const ign = t.closest('[data-ignore]');
+    if (ign) { cur.ignored = [...new Set([...(cur.ignored || []), ign.dataset.ignore])]; persist(); analyze(); say('Ignored for this piece. "Show them again" brings it back.'); }
+    if (t.closest('[data-unignore]')) { cur.ignored = []; persist(); analyze(); }
+    const wb = t.closest('[data-word]');
+    if (wb) {
+      const re = new RegExp(`\\b${reEsc(wb.dataset.word)}\\b`, 'gi'), v = el.body.value, from = el.body.selectionEnd;
+      const all = [...v.matchAll(re)];
+      const next = all.find((m) => m.index >= from) || all[0];
+      if (next) { jump(next.index, next.index + next[0].length); say(`"${wb.dataset.word}": ${all.indexOf(next) + 1} of ${all.length}`); }
+    }
     if (restore) {
       const s = cur.snapshots.find((x) => String(x.t) === restore.dataset.restore);
       if (s) { persist(true); el.body.value = s.body; el.title.value = s.title || el.title.value; persist(true); refresh(); analyze(); say('Restored. The version before it is saved in History too.'); }

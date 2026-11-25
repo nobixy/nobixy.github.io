@@ -69,13 +69,43 @@
     if (event.target instanceof Element && event.target.closest('a[href]') && !leaving && !html.classList.contains('dialing-in')) say('Document: Done');
   });
 
-  // The writing room: filter by kind (the full list still shows with JavaScript off), and a random piece.
+  // The writing room: filter by kind, search, sort, and a random piece. With JavaScript off, the full list still shows.
   const tabs = document.querySelector('.kind-tabs');
-  if (tabs) {
+  const archive = document.querySelector('.archive');
+  if (tabs && archive) {
     tabs.hidden = false;
-    const items = [...document.querySelectorAll('.archive .posts li')];
-    const months = [...document.querySelectorAll('.archive .month')];
+    const tools = document.querySelector('.archive-tools');
+    if (tools) tools.hidden = false;
+    const search = document.getElementById('archive-search');
+    const sort = document.getElementById('archive-sort');
+    const items = [...archive.querySelectorAll('.posts li')];
+    const months = [...archive.querySelectorAll('.month')];
+    items.forEach((li) => { li.home = li.parentElement; });
+    const flat = document.createElement('ul');
+    flat.className = 'posts flat-list';
+    flat.hidden = true;
+    archive.appendChild(flat);
     const empty = document.querySelector('.filter-empty');
+    let kind = '';
+    const apply = () => {
+      const terms = (search ? search.value : '').toLowerCase().split(/\s+/).filter(Boolean);
+      items.forEach((li) => { li.hidden = (Boolean(kind) && li.dataset.kind !== kind) || !terms.every((t) => li.dataset.text.includes(t)); });
+      const order = sort ? sort.value : 'new';
+      if (order === 'long' || order === 'short') {
+        items.slice().sort((a, b) => (order === 'long' ? b.dataset.words - a.dataset.words : a.dataset.words - b.dataset.words)).forEach((li) => flat.appendChild(li));
+        flat.hidden = false;
+        months.forEach((m) => { m.hidden = true; });
+      } else {
+        const dir = order === 'old' ? 1 : -1;
+        items.slice().sort((a, b) => dir * a.dataset.date.localeCompare(b.dataset.date)).forEach((li) => li.home.appendChild(li));
+        (dir === 1 ? months.slice().reverse() : months).forEach((m) => archive.insertBefore(m, flat));
+        flat.hidden = true;
+        months.forEach((m) => { m.hidden = !m.querySelector('li:not([hidden])'); });
+      }
+      if (empty) empty.hidden = items.some((li) => !li.hidden);
+      const n = items.filter((li) => !li.hidden).length;
+      say(`${n} piece${n === 1 ? '' : 's'}${kind ? ` / ${kind}` : ''}${terms.length ? ` / "${terms.join(' ')}"` : ''}`);
+    };
     tabs.addEventListener('click', (event) => {
       const tab = event.target instanceof Element && event.target.closest('.kind-tab');
       if (!tab) return;
@@ -85,13 +115,12 @@
         if (pick) { say('Picking something at random...'); pick.querySelector('a').click(); }
         return;
       }
-      const kind = tab.dataset.kind;
+      kind = tab.dataset.kind;
       tabs.querySelectorAll('[data-kind]').forEach((t) => t.setAttribute('aria-pressed', String(t === tab)));
-      items.forEach((li) => { li.hidden = Boolean(kind) && li.dataset.kind !== kind; });
-      months.forEach((m) => { m.hidden = !m.querySelector('li:not([hidden])'); });
-      if (empty) empty.hidden = items.some((li) => !li.hidden);
-      say(kind ? `Showing: ${kind}` : 'Showing: all writing');
+      apply();
     });
+    if (search) search.addEventListener('input', apply);
+    if (sort) sort.addEventListener('change', apply);
   }
 
   window.addEventListener('pageshow', (event) => {

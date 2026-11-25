@@ -76,7 +76,7 @@ def load_posts(kinds: dict | None = None) -> list[dict]:
         words = len(body.split())
         posts.append({"slug": m.group(2), "date": dt.date.fromisoformat(meta.get("date") or m.group(1)),
                       "title": meta.get("title") or m.group(2), "description": meta.get("description", ""),
-                      "html": render(body), "words": words, "excerpt": excerpt(body),
+                      "html": render(body), "words": words, "excerpt": excerpt(body), "plain": " ".join(re.sub(r"[#*_`>\[\]()]", " ", body).split()),
                       "kind": kinds.get(m.group(2), "Writing"),
                       "minutes": max(1, round(words / WPM))})
     posts.sort(key=lambda x: x["date"])
@@ -253,7 +253,7 @@ def post_item(p: dict, newest, *, full: bool = False) -> str:
             f'<time datetime="{p["date"]}">{p["date"]:%b} {p["date"].day}, {p["date"]:%Y}</time>'
             + (f'<span class="post-stats">{p["words"]:,} words / {p["minutes"]} min</span>' if full else "")
             + '</span>')
-    return (f'<li data-kind="{esc(p["kind"], quote=True)}"><a class="post-link" href="/{p["slug"]}/"><span class="post-number" title="Piece No. {p["no"]:02d}">{p["no"]:02d}</span>'
+    return (f'<li data-kind="{esc(p["kind"], quote=True)}" data-date="{p["date"]}" data-words="{p["words"]}" data-text="{esc((p["title"] + " " + p["description"] + " " + p["plain"]).lower(), quote=True)}"><a class="post-link" href="/{p["slug"]}/"><span class="post-number" title="Piece No. {p["no"]:02d}">{p["no"]:02d}</span>'
             f'<span class="post-copy"><strong>{"<em class=\"new-tag blink\">NEW!</em>" if p["date"] == newest else ""}{esc(p["title"])}</strong>'
             + (f'<span>{esc(blurb)}</span>' if blurb else "") + f'</span>{side}</a></li>')
 
@@ -264,6 +264,62 @@ def post_list(posts: list[dict], limit: int | None = None, *, newest=None) -> st
         return '<p class="muted">First posts are on the way.</p>'
     newest = newest or max(p["date"] for p in items)
     return '<ul class="posts">' + "".join(post_item(p, newest) for p in items) + "</ul>"
+
+
+STOPWORDS = set("""a an the and or but if so of to in on at by for with from as is are was were be been being am i me my we our
+you your he she it its they them their this that these those there here what which who whom when where why how not no do does did
+done have has had will would can could should may might must just very really than then too also into out up down over about after
+before again more most some any all each few other such only own same both get got one like even it's i'm don't can't didn't i've
+i'll that's there's you're they're him her his us much many way well back now still because while through off going thing things
+make made say said know see went go come came want take let them i'd he's she's we're""".split())
+
+
+def numbers_panel(posts: list[dict]) -> str:
+    """Real numbers about the writing, computed at build time: a publishing calendar, words per piece, favorite words."""
+    if not posts:
+        return ""
+    end = dt.date.today()
+    start = end - dt.timedelta(days=end.weekday() + 1 + 7 * 25)  # 26 weeks, Sunday-first columns
+    per_day = {}
+    for p in posts:
+        per_day.setdefault(p["date"], []).append(p)
+    weeks, months = [], []
+    d = start
+    for w in range(26):
+        col = []
+        for _ in range(7):
+            items = per_day.get(d, [])
+            level = 0 if d > end else min(len(items), 2) + (0 if items else 0)
+            tip = f"{d:%b} {d.day}: " + (", ".join(x["title"] for x in items) if items else "nothing published")
+            col.append(f'<i class="cal-{"future" if d > end else level}" title="{esc(tip, quote=True)}"></i>')
+            if d.day <= 7 and d.weekday() == 6:
+                months.append((w, f"{d:%b}"))
+            d += dt.timedelta(days=1)
+        weeks.append("<span>" + "".join(col) + "</span>")
+    month_labels = "".join(f'<b style="grid-column:{w + 1}">{m}</b>' for w, m in months)
+    in_window = sum(1 for p in posts if start <= p["date"] <= end)
+    longest = max(p["words"] for p in posts)
+    bars = "".join(
+        f'<li title="{esc(p["title"], quote=True)}: {p["words"]:,} words, {p["minutes"]} min"><a href="/{p["slug"]}/"><span class="nb-no">{p["no"]:02d}</span>'
+        f'<span class="nb-title">{esc(p["title"])}</span><span class="nb-track"><span style="width:{p["words"] * 100 / longest:.1f}%"></span></span>'
+        f'<span class="nb-num">{p["words"]:,}</span></a></li>' for p in sorted(posts, key=lambda x: x["no"]))
+    counts = {}
+    for p in posts:
+        for w in re.findall(r"[a-z][a-z'-]+", p["plain"].lower()):
+            if len(w) > 3 and w not in STOPWORDS:
+                counts[w] = counts.get(w, 0) + 1
+    fav = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:12]
+    fmax = fav[0][1] if fav else 1
+    tags = "".join(f'<li style="font-size:{12 + 10 * c / fmax:.0f}px" title="used {c} times">{esc(w)} <small>{c}</small></li>' for w, c in fav)
+    total_min = sum(p["minutes"] for p in posts)
+    return f'''<section class="panel numbers-panel"><div class="panel-top"><span>By the Numbers</span><span>real counts, updated every post</span></div><div class="panel-body">
+<h3 class="subheading">PUBLISHING CALENDAR: LAST 26 WEEKS</h3>
+<div class="cal" role="img" aria-label="{in_window} pieces published in the last 26 weeks"><div class="cal-months">{month_labels}</div><div class="cal-grid">{"".join(weeks)}</div></div>
+<p class="cal-legend"><span><i class="cal-0"></i>nothing</span><span><i class="cal-1"></i>1 piece</span><span><i class="cal-2"></i>2+</span> &nbsp; {in_window} piece{"s" if in_window != 1 else ""} in 26 weeks</p>
+<h3 class="subheading">WORDS PER PIECE</h3><ul class="nb-bars">{bars}</ul>
+<div class="nb-row"><div><h3 class="subheading">WORDS I REACH FOR</h3><ul class="nb-tags">{tags}</ul></div>
+<div class="nb-facts"><h3 class="subheading">ALL OF IT</h3><p><b>{sum(p["words"] for p in posts):,}</b> words</p><p><b>{total_min}</b> min to read everything</p><p><b>{round(sum(p["words"] for p in posts) / len(posts)):,}</b> words per piece on average</p></div></div>
+</div></section>'''
 
 
 def writing_hub(posts: list[dict], settings: dict) -> str:
@@ -290,7 +346,10 @@ def writing_hub(posts: list[dict], settings: dict) -> str:
             '<button type="button" class="kind-tab" aria-pressed="true" data-kind="">All <small>' + str(len(posts)) + '</small></button>'
             + "".join(f'<button type="button" class="kind-tab" aria-pressed="false" data-kind="{esc(k, quote=True)}">{esc(k)} '
                       f'<small>{sum(p["kind"] == k for p in posts)}</small></button>' for k in kinds)
-            + '<button type="button" class="kind-tab lucky" data-lucky>I\'m Feeling Lucky!</button></div>')
+            + '<button type="button" class="kind-tab lucky" data-lucky>I\'m Feeling Lucky!</button></div>'
+            + '<div class="archive-tools" hidden><label>Search: <input type="search" id="archive-search" placeholder="title or words..."></label>'
+            '<label>Sort: <select id="archive-sort"><option value="new">Newest first</option><option value="old">Oldest first</option>'
+            '<option value="long">Longest first</option><option value="short">Shortest first</option></select></label></div>')
     months, groups = [], {}
     for p in posts:
         key = (p["date"].year, p["date"].month)
@@ -307,7 +366,8 @@ def writing_hub(posts: list[dict], settings: dict) -> str:
             + f'<section class="panel archive-panel"><div class="panel-top"><span>All My Writing</span><span>{len(posts)} pieces</span></div>'
             f'<div class="panel-body"><div class="archive-intro">{intro}</div>{stats}{tabs}'
             f'<p class="filter-empty" hidden>Nothing of that kind yet.</p><div class="archive">{archive}</div>'
-            '<p class="archive-foot">Want new pieces as they land? <a href="/feed/">Get the RSS feed -></a></p></div></section>')
+            '<p class="archive-foot">Want new pieces as they land? <a href="/feed/">Get the RSS feed -></a></p></div></section>'
+            + numbers_panel(posts))
 
 
 def resume_html(data: dict, posts: list[dict]) -> str:

@@ -13,11 +13,11 @@
 <meta name="theme-color" content="#000080">
 <link rel="alternate" type="application/rss+xml" title="Joseph Noblett: writing" href="/feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000080%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffff00%22/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/style.css?v=f4575c84bb88">
-<script src="/site.js?v=23637f61b267" defer></script>
+<link rel="stylesheet" href="/style.css?v=eb2619a22cf0">
+<script src="/site.js?v=5dda8e1f30e4" defer></script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<script src="/admin.js?v=8066b213ccff" defer></script>
+<script src="/admin.js?v=6e65e973ce02" defer></script>
 <noscript><style>html.dialing-in main { animation: none; }</style></noscript>
 </head>
 <body>
@@ -114,11 +114,13 @@
     <aside class="ws-side" aria-label="Revision tools">
       <div class="kind-tabs ws-tabs" role="tablist">
         <button type="button" class="kind-tab" role="tab" aria-pressed="true" data-tab="feedback">Feedback</button>
+        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="marked">Marked</button>
         <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="preview">Preview</button>
         <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="outline">Outline</button>
         <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="history">History</button>
       </div>
       <div class="ws-pane" id="ws-pane-feedback" role="tabpanel"></div>
+      <div class="ws-pane" id="ws-pane-marked" role="tabpanel" hidden></div>
       <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" hidden></div>
       <div class="ws-pane" id="ws-pane-outline" role="tabpanel" hidden></div>
       <div class="ws-pane" id="ws-pane-history" role="tabpanel" hidden></div>
