@@ -2,9 +2,10 @@
 """Build the site into docs/ (GitHub Pages serves main:/docs).
 
 Sources:
-  data/resume.json   the living resume, exported by the study dashboard
+  data/profile.json  the resume (edit by hand)
+  site.json          what I'm doing now, news items, writing intro and the kind of each piece
   posts/*.md         published writing: YYYY-MM-DD-slug.md with title/date/description front matter
-  drafts/            git-ignored; never built
+  drafts/            git-ignored; never built (python3 write.py new/publish)
 
 Run: python3 build.py   (preview: python3 -m http.server -d docs 8000)
 """
@@ -44,7 +45,22 @@ def front_matter(text: str) -> tuple[dict, str]:
     return meta, text[m.end():]
 
 
-def load_posts() -> list[dict]:
+def excerpt(body: str, words: int = 42) -> str:
+    """The opening of a piece as plain text: first real paragraph, markdown stripped."""
+    for para in re.split(r"\n\s*\n", body.strip()):
+        para = para.strip()
+        if not para or para.startswith(("#", "```", "|", ">", "---", "![")):
+            continue
+        text = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", para)
+        text = re.sub(r"[*_`]+", "", text)
+        text = " ".join(text.split())
+        cut = text.split()
+        return text if len(cut) <= words else " ".join(cut[:words]).rstrip(",;:.") + "..."
+    return ""
+
+
+def load_posts(kinds: dict | None = None) -> list[dict]:
+    kinds = kinds or {}
     posts = []
     for p in sorted((ROOT / "posts").glob("*.md")):
         m = re.match(r"^(\d{4}-\d{2}-\d{2})-(.+)\.md$", p.name)
@@ -54,9 +70,13 @@ def load_posts() -> list[dict]:
         words = len(body.split())
         posts.append({"slug": m.group(2), "date": dt.date.fromisoformat(meta.get("date") or m.group(1)),
                       "title": meta.get("title") or m.group(2), "description": meta.get("description", ""),
-                      "html": render(body),
+                      "html": render(body), "words": words, "excerpt": excerpt(body),
+                      "kind": kinds.get(m.group(2), "Writing"),
                       "minutes": max(1, round(words / WPM))})
-    posts.sort(key=lambda x: x["date"], reverse=True)
+    posts.sort(key=lambda x: x["date"])
+    for n, p in enumerate(posts, 1):
+        p["no"] = n  # piece number in the order written: No. 01 is the first thing I published
+    posts.reverse()
     return posts
 
 
@@ -96,7 +116,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
     menu_items = (
         ("/", "~", "Home"),
         (f"{home}#hello", "*", "About me"),
-        (f"{home}#learning", "+", "Study log"),
+        (f"{home}#learning", "+", "Now learning"),
         (f"{home}#experience", "*", "Experience"),
         ("/writing/", "+", "Writing archive"),
         ("/feed/", "+", "RSS feed"),
@@ -119,10 +139,11 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
         for link in data["profile"].get("links", [])
     )
     updated = esc(us_date(data.get("updated", "")))
-    learning = data.get("learning", {})
-    subjects = " <span>+</span> ".join(esc(course["name"]) for course in learning.get("open", []))
+    now = data.get("now", {})
+    subjects = esc(now.get("short", "")).replace(" + ", " <span>+</span> ")
+    focus = now.get("focus", [])
     news = ["Welcome to my homepage! Thanks for stopping by.",
-            f"Now studying: {', '.join(c['name'] for c in learning.get('open', [])) or 'the basics'}."]
+            f"Now learning: {', '.join(f['name'] + ' (' + f['where'] + ')' for f in focus[:2]) or 'the basics'}."]
     news += [f"NEW WRITING: {p['title']}" for p in posts[:3]]
     news.append(f"Last updated {us_date(data.get('updated', ''))}.")
     ticker = "".join(f"<span>{esc(n)}</span><i aria-hidden=\"true\">*</i>" for n in news)
@@ -176,7 +197,7 @@ def page(title: str, body: str, data: dict, *, description: str = "", path: str 
 <div class="site-layout">
 <aside class="sidebar" aria-label="Site directory">
   <nav class="side-box side-nav" aria-label="Main navigation"><h2>* Menu</h2><ul class="menu-list">{menu}</ul></nav>
-  <section class="side-box status-box"><h2>* What I'm Up To</h2><p>Studying EECS one lesson at a time.</p><p class="tiny-label">LESSONS COMPLETED</p>{odometer(int(learning.get("done", 0)))}<p class="tiny-label">CURRENTLY OPEN</p><p class="open-subjects">{subjects or "More soon"}</p><a href="{home}#learning">View study progress -></a></section>
+  <section class="side-box status-box"><h2>* What I'm Up To</h2><p>{esc(now.get("status", "Learning, one rep at a time."))}</p><p class="tiny-label">CURRENTLY LEARNING</p><p class="open-subjects">{subjects or "More soon"}</p><p class="tiny-label">WORDS PUBLISHED</p>{odometer(sum(p["words"] for p in posts))}<a href="{home}#learning">See what I'm learning -></a><a href="/writing/">Read the writing -></a></section>
   <div class="web-stamps" aria-label="Web badges">{badges()}</div>
   <a class="back-top" href="#top">^ BACK TO TOP</a>
 </aside>
@@ -219,31 +240,80 @@ def bar(done: int, total: int) -> str:
     return f'<span class="bar" role="img" aria-label="{done} of {total}"><span style="width:{pct:.1f}%"></span></span>'
 
 
-def post_list(posts: list[dict], limit: int | None = None) -> str:
+def post_item(p: dict, newest, *, full: bool = False) -> str:
+    blurb = p["description"] or (p["excerpt"] if full else "")
+    side = (f'<span class="post-side"><span class="kind-tag">{esc(p["kind"])}</span>'
+            f'<time datetime="{p["date"]}">{p["date"]:%b} {p["date"].day}, {p["date"]:%Y}</time>'
+            + (f'<span class="post-stats">{p["words"]:,} words / {p["minutes"]} min</span>' if full else "")
+            + '</span>')
+    return (f'<li data-kind="{esc(p["kind"], quote=True)}"><a class="post-link" href="/{p["slug"]}/"><span class="post-number" title="Piece No. {p["no"]:02d}">{p["no"]:02d}</span>'
+            f'<span class="post-copy"><strong>{"<em class=\"new-tag blink\">NEW!</em>" if p["date"] == newest else ""}{esc(p["title"])}</strong>'
+            + (f'<span>{esc(blurb)}</span>' if blurb else "") + f'</span>{side}</a></li>')
+
+
+def post_list(posts: list[dict], limit: int | None = None, *, newest=None) -> str:
     items = posts[:limit] if limit else posts
     if not items:
         return '<p class="muted">First posts are on the way.</p>'
-    newest = max((p["date"] for p in items), default=None)
-    return '<ul class="posts">' + "".join(
-        f'<li><a class="post-link" href="/{p["slug"]}/"><span class="post-number">{i:02d}</span>'
-        f'<span class="post-copy"><strong>{"<em class=\"new-tag blink\">NEW!</em>" if p["date"] == newest else ""}{esc(p["title"])}</strong>'
-        + (f'<span>{esc(p["description"])}</span>' if p["description"] else "")
-        + f'</span><span class="post-side"><time datetime="{p["date"]}">{p["date"]:%b} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">-></span></span></a></li>'
-        for i, p in enumerate(items, 1)) + "</ul>"
+    newest = newest or max(p["date"] for p in items)
+    return '<ul class="posts">' + "".join(post_item(p, newest) for p in items) + "</ul>"
+
+
+def writing_hub(posts: list[dict], settings: dict) -> str:
+    """The writing room: what's newest, real totals, filters by kind, and the archive by month."""
+    intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
+    head = ('<section class="page-heading"><p class="eyebrow">You are here: Home &gt; Writing</p>'
+            '<h1>Things I put <em>into words.</em><span aria-hidden="true">*</span></h1>'
+            '<p>Study notes, short stories, essays and thoughts in progress. This is where they land.</p></section>')
+    if not posts:
+        return head + '<section class="panel archive-panel"><div class="panel-body"><p>First posts are on the way.</p></div></section>'
+    latest, newest = posts[0], posts[0]["date"]
+    words = sum(p["words"] for p in posts)
+    first = min(p["date"] for p in posts)
+    kinds = sorted({p["kind"] for p in posts})
+    feature = f'''<section class="panel feature-panel"><div class="section-bar"><span>Fresh Off the Press!</span><span class="blink">NEW!</span></div>
+<div class="feature-body"><p class="feature-label">PIECE No. {latest["no"]:02d} &nbsp;/&nbsp; {esc(latest["kind"].upper())} &nbsp;/&nbsp; {us_date(latest["date"].isoformat())}</p>
+<h2><a href="/{latest["slug"]}/">{esc(latest["title"])}</a></h2>
+<blockquote class="feature-excerpt"><p>{esc(latest["excerpt"])}</p></blockquote>
+<p class="feature-foot"><span>{latest["words"]:,} words / {latest["minutes"]} min read</span><a class="dlg-btn" href="/{latest["slug"]}/">Read it -></a></p></div></section>'''
+    stats = (f'<div class="stat-row stat-row-3"><div><strong>{len(posts)}</strong><span>PIECES PUBLISHED</span></div>'
+             f'<div><strong>{words:,}</strong><span>WORDS SO FAR</span></div>'
+             f'<div><strong>{us_date(first.isoformat())}</strong><span>WRITING SINCE</span></div></div>')
+    tabs = ('<div class="kind-tabs" role="toolbar" aria-label="Show writing by kind" hidden>'
+            '<button type="button" class="kind-tab" aria-pressed="true" data-kind="">All <small>' + str(len(posts)) + '</small></button>'
+            + "".join(f'<button type="button" class="kind-tab" aria-pressed="false" data-kind="{esc(k, quote=True)}">{esc(k)} '
+                      f'<small>{sum(p["kind"] == k for p in posts)}</small></button>' for k in kinds)
+            + '<button type="button" class="kind-tab lucky" data-lucky>I\'m Feeling Lucky!</button></div>')
+    months, groups = [], {}
+    for p in posts:
+        key = (p["date"].year, p["date"].month)
+        if key not in groups:
+            groups[key] = []
+            months.append(key)
+        groups[key].append(p)
+    archive = "".join(
+        f'<section class="month" aria-label="{dt.date(y, m, 1):%B %Y}"><h3 class="month-head"><span>{dt.date(y, m, 1):%B %Y}</span>'
+        f'<small>{len(groups[(y, m)])} piece{"s" if len(groups[(y, m)]) != 1 else ""}</small></h3>'
+        '<ul class="posts">' + "".join(post_item(p, newest, full=True) for p in groups[(y, m)]) + '</ul></section>'
+        for y, m in months)
+    return (head + feature
+            + f'<section class="panel archive-panel"><div class="panel-top"><span>All My Writing</span><span>{len(posts)} pieces</span></div>'
+            f'<div class="panel-body"><div class="archive-intro">{intro}</div>{stats}{tabs}'
+            f'<p class="filter-empty" hidden>Nothing of that kind yet.</p><div class="archive">{archive}</div>'
+            '<p class="archive-foot">Want new pieces as they land? <a href="/feed/">Get the RSS feed -></a></p></div></section>')
 
 
 def resume_html(data: dict, posts: list[dict]) -> str:
-    profile, learning = data["profile"], data.get("learning") or {}
+    profile, now = data["profile"], data.get("now") or {}
     links = "".join(
         f'<a href="{esc(link["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(link["label"])} -></a>'
         for link in profile.get("links", [])
     )
     first = profile["name"].split()[0]
-    updates = [f'<li><time datetime="{esc(data.get("updated", ""))}">{esc(us_date(data.get("updated", "")))}</time><span>Resume and study data synced.</span></li>']
-    updates.extend(
-        f'<li><time datetime="{post["date"]}">{us_date(post["date"].isoformat())}</time><a href="/{post["slug"]}/">New writing: {esc(post["title"])}</a></li>'
-        for post in posts[:3]
-    )
+    events = [(str(n["date"]), f'<span>{esc(n["text"])}</span>') for n in data.get("news", [])]
+    events += [(p["date"].isoformat(), f'<a href="/{p["slug"]}/">New writing: {esc(p["title"])}</a>') for p in posts]
+    events.sort(key=lambda e: e[0], reverse=True)
+    updates = [f'<li><time datetime="{d}">{us_date(d)}</time>{html_}</li>' for d, html_ in events[:5]]
     out = [f"""<section class="welcome-panel" id="hello" aria-labelledby="hello-title">
   <div class="section-bar"><span>Welcome to my Homepage!</span></div>
   <div class="welcome-content"><div class="welcome-copy"><p class="welcome-label">HI THERE! &nbsp; / &nbsp; WELCOME TO MY HOMEPAGE</p>
@@ -261,20 +331,15 @@ def resume_html(data: dict, posts: list[dict]) -> str:
 <div class="home-columns"><div class="content-main">
 <section class="panel updates-panel"><div class="section-bar"><span>What's New?!</span></div><div class="panel-body"><ul class="updates">{"".join(updates)}</ul></div></section>"""]
 
-    if learning:
-        open_courses = "".join(
-            f'<li><span>{esc(course["name"])}</span>{bar(course["done"], course["total"])}<span class="num">{course["done"]}/{course["total"]}</span></li>'
-            for course in learning.get("open", [])
-        )
-        phases = "".join(
-            f'<li><span>{esc(phase["name"])}</span>{bar(phase["done"], phase["total"])}<span class="num">{phase["courses_done"]}/{phase["courses"]} courses</span></li>'
-            for phase in learning.get("phases", [])
-        )
+    if now.get("focus"):
+        focus = "".join(
+            f'<li><span class="focus-tag">{esc(f["tag"])}</span><span class="focus-name">{esc(f["name"])}</span>'
+            + (f'<a class="focus-where" href="{esc(f["href"], quote=True)}" target="_blank" rel="noopener noreferrer">{esc(f["where"])} -></a>'
+               if f.get("href") else f'<span class="focus-where">{esc(f["where"])}</span>') + '</li>'
+            for f in now["focus"])
         out.append(f"""<section class="panel learning-panel" id="learning"><div class="section-bar"><span>What I'm Learning</span></div><div class="panel-body">
-<p>I'm working through a self-built electrical engineering and computer science curriculum: {learning["courses"]} courses from foundations through systems, AI, hardware and a capstone, studied as one sequence. <a href="{esc(learning["curriculum_href"], quote=True)}">See the full curriculum -></a></p>
-<div class="stat-row"><div><strong>{learning["done"]:,}<small> / {learning["total"]:,}</small></strong><span>LESSONS COMPLETE</span></div><div><strong>{learning["courses_done"]}<small> / {learning["courses"]}</small></strong><span>COURSES FINISHED</span></div></div>
-<h3 class="subheading">OPEN COURSES</h3><ul class="progress">{open_courses}</ul>
-<details class="phase-details"><summary>SHOW ALL STUDY PHASES <span aria-hidden="true">[ + ]</span></summary><ul class="progress">{phases}</ul></details>
+<p>{esc(now.get("intro", ""))}</p>
+<h3 class="subheading">ON MY DESK RIGHT NOW</h3><ul class="focus">{focus}</ul>
 </div></section>""")
 
     jobs = "".join(
@@ -287,7 +352,12 @@ def resume_html(data: dict, posts: list[dict]) -> str:
     out.append('</div><aside class="content-rail" aria-label="More about Joseph">')
 
     if posts:
-        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>My Writing</span><span class="blink">NEW!</span></div><div class="panel-body">{post_list(posts, 3)}<a class="text-link" href="/writing/">-> ALL POSTS</a></div></section>')
+        total = sum(p["words"] for p in posts)
+        out.append(f'<section class="panel writing-panel"><div class="section-bar"><span>My Writing</span><span class="blink">NEW!</span></div><div class="panel-body">{post_list(posts, 3)}<a class="text-link" href="/writing/">-> ALL {len(posts)} PIECES ({total:,} WORDS)</a></div></section>')
+
+    if now.get("off_clock"):
+        hobbies = "".join(f'<div><dt>{esc(h["name"])}</dt><dd>{esc(h["text"])}</dd></div>' for h in now["off_clock"])
+        out.append(f'<section class="panel offclock-panel"><div class="section-bar"><span>Off the Clock</span></div><div class="panel-body"><dl class="skills">{hobbies}</dl></div></section>')
 
     skills = "".join(f'<div><dt>{esc(skill["label"])}</dt><dd>{esc(skill["text"])}</dd></div>' for skill in profile.get("skills", []))
     out.append(f'<section class="panel skills-panel"><div class="section-bar"><span>Stuff I Know</span></div><div class="panel-body"><dl class="skills">{skills}</dl></div></section>')
@@ -331,7 +401,7 @@ def feed(posts: list[dict], data: dict) -> str:
         return dt.datetime(d.year, d.month, d.day, 12, tzinfo=dt.timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
     items = "".join(f"""<item><title>{esc(p["title"])}</title><link>{SITE_URL}/{p["slug"]}/</link><guid>{SITE_URL}/{p["slug"]}/</guid><pubDate>{rfc822(p["date"])}</pubDate><description>{esc(p["html"])}</description></item>""" for p in posts)
     name = esc(data["profile"]["name"])
-    return f'<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>{name}: writing</title><link>{SITE_URL}/writing/</link><description>{name} writes about learning EECS.</description>{items}</channel></rss>\n'
+    return f'<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>{name}: writing</title><link>{SITE_URL}/writing/</link><description>{name} writes about learning, code and whatever is on his mind.</description>{items}</channel></rss>\n'
 
 
 def write(rel: str, text: str) -> None:
@@ -342,12 +412,12 @@ def write(rel: str, text: str) -> None:
 
 
 def build() -> None:
-    data = json.loads((ROOT / "data" / "resume.json").read_text(encoding="utf-8"))
-    posts = load_posts()
-    try:
-        settings = json.loads((ROOT / "site.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        settings = {}
+    data = json.loads((ROOT / "data" / "profile.json").read_text(encoding="utf-8"))
+    settings = json.loads((ROOT / "site.json").read_text(encoding="utf-8"))
+    data["now"], data["news"] = settings.get("now", {}), settings.get("news", [])
+    posts = load_posts(settings.get("writing_kinds"))
+    latest = max([data.get("updated", "")] + [n["date"] for n in data["news"]] + [p["date"].isoformat() for p in posts])
+    data["updated"] = latest
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir()
@@ -356,21 +426,24 @@ def build() -> None:
     shutil.copy(ROOT / "site.js", OUT / "site.js")
     shutil.copy(ROOT / "avatar.jpg", OUT / "avatar.jpg")
     write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
-    intro = "".join(f"<p>{esc(x)}</p>" for x in settings.get("writing_intro", []))
-    writing_body = f'''<section class="page-heading"><p class="eyebrow">You are here: Home &gt; Writing</p><h1>Things I put <em>into words.</em><span aria-hidden="true">*</span></h1><p>Study notes, short stories, and thoughts in progress. This is where they land.</p></section>
-<section class="panel archive-panel"><div class="panel-top"><span>All My Writing</span><span>{len(posts)} pieces</span></div><div class="panel-body"><div class="archive-intro">{intro}</div>{post_list(posts)}</div></section>'''
-    write("writing/index.html", page("Writing", writing_body, data, path="/writing/", page_class="archive-page",
-                                     description="What I'm learning, written up.", posts=posts))
+    write("writing/index.html", page("Writing", writing_hub(posts, settings), data, path="/writing/", page_class="archive-page",
+                                     description="Study notes, short stories, essays and thoughts in progress.", posts=posts))
     for n, p in enumerate(posts):
         others = [other for other in posts if other["slug"] != p["slug"]][:2]
         newer, older = posts[n - 1] if n else posts[-1], posts[(n + 1) % len(posts)]
         ring = (f'<nav class="webring" aria-label="Writing ring"><p class="ring-name">* NOBIXY\'S WRITING RING *</p>'
                 f'<p><a href="/{older["slug"]}/" rel="prev"><< older</a> | <a href="/writing/">index</a> | '
                 f'<a href="/{newer["slug"]}/" rel="next">newer >></a></p></nav>') if len(posts) > 1 else ""
-        related = post_list(others) if others else '<p>More writing is on the way.</p>'
+        prev_p = posts[n + 1] if n + 1 < len(posts) else None
+        next_p = posts[n - 1] if n else None
+        pager = ('<nav class="pager" aria-label="Older and newer writing">'
+                 + (f'<a class="pager-old" href="/{prev_p["slug"]}/" rel="prev"><small><< OLDER</small>{esc(prev_p["title"])}</a>' if prev_p else '<span></span>')
+                 + (f'<a class="pager-new" href="/{next_p["slug"]}/" rel="next"><small>NEWER >></small>{esc(next_p["title"])}</a>' if next_p else '<span></span>')
+                 + '</nav>') if len(posts) > 1 else ""
+        related = post_list(others, newest=posts[0]["date"]) if others else '<p>More writing is on the way.</p>'
         body = f'''<div class="article-grid"><div><a class="back-link" href="/writing/"><- BACK TO THE ARCHIVE</a>
-<article class="post-panel"><header class="post-header"><p class="eyebrow">You are here: <a href="/">Home</a> &gt; <a href="/writing/">Writing</a></p><h1>{esc(p["title"])}</h1><p class="post-meta">Posted on <time datetime="{p["date"]}">{p["date"]:%B} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">*</span>{p["minutes"]} min read</p></header>
-<div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">*</span><p>Thanks for reading.</p><a href="/writing/">See all writing -></a></footer></article></div>
+<article class="post-panel"><header class="post-header"><p class="eyebrow">You are here: <a href="/">Home</a> &gt; <a href="/writing/">Writing</a></p><h1>{esc(p["title"])}</h1><p class="post-meta"><span class="kind-tag">{esc(p["kind"])}</span>Piece No. {p["no"]:02d}<span aria-hidden="true">*</span>Posted on <time datetime="{p["date"]}">{p["date"]:%B} {p["date"].day}, {p["date"]:%Y}</time><span aria-hidden="true">*</span>{p["words"]:,} words<span aria-hidden="true">*</span>{p["minutes"]} min read</p></header>
+<div class="post-content">{p["html"]}</div><footer class="post-end"><span aria-hidden="true">*</span><p>Thanks for reading.</p><a href="/writing/">See all writing -></a></footer></article>{pager}</div>
 <aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>More Writing</span><span aria-hidden="true"></span></div><div class="panel-body"><p class="eyebrow">Read these next:</p>{related}</div></div>{ring}<div class="aside-note">* MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     write("404.html", page("404 Not Found", not_found_html(), data, path="/404.html", page_class="error-page",

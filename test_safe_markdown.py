@@ -20,7 +20,8 @@ class SafeMarkdownTests(unittest.TestCase):
         self.assertNotIn("alert(1)</script>", html)
 
     def test_resume_does_not_render_empty_bullet_list(self):
-        data = json.loads((Path(__file__).parent / 'data' / 'resume.json').read_text())
+        data = json.loads((Path(__file__).parent / 'data' / 'profile.json').read_text())
+        data['now'] = json.loads((Path(__file__).parent / 'site.json').read_text())['now']
         self.assertNotIn('<ul></ul>', build.resume_html(data, []))
 
     def test_decodes_entities_before_url_check(self):

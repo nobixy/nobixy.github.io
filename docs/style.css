@@ -212,7 +212,7 @@ ul.progress li { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(
 .post-link:visited .post-copy strong { color: var(--visited); }
 .post-copy > span { color: #336666; font-size: 14px; line-height: 1.4; }
 .post-side { grid-column: 2; color: #666699; font: 12px var(--mono); }
-.post-side > span { display: none; }
+.post-side > span:not(.kind-tag):not(.post-stats) { display: none; }
 .new-tag { display: inline; white-space: nowrap; margin-right: 6px; padding: 0 4px; background: #cc0000; color: #ffff00; font: bold 11px/16px var(--chrome-font); font-style: normal; text-decoration: none; vertical-align: 2px; }
 .text-link { display: block; margin-top: 8px; font: bold 13px var(--mono); }
 .skills-panel .section-bar { background: #003399; }
@@ -374,6 +374,63 @@ html.page-leaving::after { content: ''; position: fixed; inset: 0; z-index: 180;
 .lost { margin: 0; color: #663366; font: bold 13px var(--mono); text-align: center; }
 .feed-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; padding: 10px; background: var(--chrome); box-shadow: var(--raised); font: 13px var(--chrome-font); }
 .feed-url { flex: 1 1 240px; padding: 4px 6px; background: #ffffff; box-shadow: var(--sunken); font: 14px var(--mono); overflow-wrap: anywhere; user-select: all; }
+
+/* ---------------------------------------------------------------- now learning, off the clock */
+ul.focus { display: grid; margin: 0; padding: 0; list-style: none; }
+ul.focus li { display: grid; grid-template-columns: 78px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dotted #cccccc; font-size: 15px; }
+.focus-tag { padding: 1px 4px; background: var(--chrome); box-shadow: var(--raised); color: #000000; font: bold 10px/16px var(--mono); text-align: center; }
+ul.focus li:first-child .focus-tag { background: #006633; color: #ffff99; }
+.focus-name { font-weight: bold; color: #333366; }
+.focus-where { color: #666699; font: 12px var(--mono); white-space: nowrap; }
+a.focus-where { color: var(--link); }
+.offclock-panel .section-bar { background: #996600; }
+
+/* ---------------------------------------------------------------- the writing room */
+.kind-tag { display: inline-block; margin-right: 6px; padding: 0 5px; border: 1px solid #006600; background: #ccffcc; color: #003300; font: bold 10px/15px var(--mono); text-transform: uppercase; vertical-align: 1px; }
+.post-meta .kind-tag { margin-right: 0; }
+.post-side .kind-tag { margin-right: 8px; }
+.post-stats { display: block; color: #666699; }
+.feature-panel { margin-top: 14px; }
+.feature-panel .section-bar { background: #990000; }
+.feature-body { padding: 14px 18px 12px; background: #ffffcc; }
+.feature-label { margin: 0 0 4px; color: #990000; font: bold 12px var(--mono); }
+.feature-body h2 { margin: 0 0 10px; font: bold clamp(22px, 3vw, 30px)/1.2 var(--body-font); }
+.feature-excerpt { margin: 0 0 10px; padding: 8px 14px; border: 2px inset #cccc99; background: #ffffff; font: italic 17px/1.6 var(--body-font); }
+.feature-excerpt p { margin: 0; max-width: 70ch; }
+.feature-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin: 0; color: #666633; font: 12px var(--mono); }
+.stat-row-3 { grid-template-columns: repeat(3, 1fr); margin: 0 0 14px; }
+.stat-row-3 strong { font-size: 22px; }
+.kind-tabs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 2px; padding: 0 4px; border-bottom: 2px solid #808080; }
+.kind-tabs[hidden] { display: none; }
+.kind-tab { position: relative; top: 2px; padding: 4px 10px 3px; border: 0; background: var(--chrome); box-shadow: inset 1px 1px #ffffff, inset -1px 0 var(--chrome-dark), inset -2px 0 var(--chrome-shadow); color: #000000; font: 12px var(--chrome-font); }
+.kind-tab small { color: #333366; font: bold 10px var(--mono); }
+.kind-tab[aria-pressed='true'] { z-index: 1; padding-top: 6px; background: #ffffff; font-weight: bold; box-shadow: inset 1px 1px #808080, inset -1px 0 var(--chrome-dark); }
+.kind-tab.lucky { margin-left: auto; top: -3px; box-shadow: var(--raised); background: #ffff99; font-weight: bold; }
+.kind-tab.lucky:active { box-shadow: var(--sunken); }
+.filter-empty { margin: 14px 4px; color: #663366; font: bold 13px var(--mono); }
+.archive { padding-top: 6px; }
+.month-head { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 2px; padding: 3px 8px; border-left: 4px solid #009900; background: #eeeeee; color: #006600; font: bold 13px var(--mono); text-transform: uppercase; }
+.month-head small { color: #666699; font: 11px var(--mono); text-transform: none; }
+.month:first-child .month-head { margin-top: 10px; }
+.month[hidden], .posts li[hidden] { display: none; }
+.archive-panel .post-side { text-align: right; }
+.archive-panel .post-side .kind-tag { margin: 0 0 3px; }
+.archive-panel .post-side time { display: block; }
+.archive-foot { margin: 14px 0 0; padding-top: 10px; border-top: 2px groove #ccccff; font: bold 13px var(--mono); }
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pager a { display: grid; gap: 2px; padding: 8px 10px; background: var(--chrome); box-shadow: var(--raised); color: var(--link); font: bold 14px/1.3 var(--body-font); }
+.pager a:active { box-shadow: var(--sunken); }
+.pager small { color: #000000; font: bold 11px var(--mono); text-decoration: none; }
+.pager-new { text-align: right; }
+@media (max-width: 690px) {
+  ul.focus li { grid-template-columns: 70px minmax(0, 1fr); }
+  .focus-where { grid-column: 2; }
+  .stat-row-3 { grid-template-columns: 1fr; }
+  .stat-row-3 > div + div { border-left: 0; border-top: 2px groove #ccccff; }
+  .archive-panel .post-side { text-align: left; }
+  .kind-tab.lucky { margin: 6px 0 0; top: 0; width: 100%; }
+  .pager { grid-template-columns: 1fr; }
+}
 
 /* ---------------------------------------------------------------- welcome photo: a little Win95 image viewer */
 .photo-window { align-self: start; justify-self: center; display: block; width: 222px; margin: 0; padding: 3px; border: 0; background: var(--chrome); box-shadow: var(--raised), 6px 6px 0 #00cc00, 6px 6px 0 1px #006600; }

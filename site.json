@@ -1,33 +1,35 @@
 {
-  "location": "Brandenburg, KY",
-  "show_email": false,
-  "links": [
-    {
-      "label": "LinkedIn",
-      "href": "https://www.linkedin.com/in/joe-noblett"
-    },
-    {
-      "label": "GitHub",
-      "href": "https://github.com/nobixy"
-    }
-  ],
-  "hide_experience": [],
-  "experience_overrides": {
-    "Shift Lead / Manager — McDonald's": {
-      "period": "Oct 2025 – Sep 2026 | Brandenburg, KY"
-    }
+  "now": {
+    "status": "Learning Python, one rep at a time.",
+    "short": "Python + DSA",
+    "intro": "I set my old self-built EECS curriculum aside. The new plan is narrower and more honest: get genuinely good at Python first, then data structures and algorithms, with a little practice every single day, even on work days. It's all aimed at one goal: a software engineering job.",
+    "focus": [
+      {"tag": "MAIN", "name": "Python Fundamentals", "where": "Coddy", "href": "https://coddy.tech"},
+      {"tag": "NEXT UP", "name": "Python for Professional Devs", "where": "masters.dev", "href": ""},
+      {"tag": "DAILY", "name": "2-3 easy problems", "where": "NeetCode", "href": "https://neetcode.io"},
+      {"tag": "WARM-UP", "name": "Typing practice before coding", "where": "Monkeytype", "href": "https://monkeytype.com"}
+    ],
+    "off_clock": [
+      {"name": "Chess", "text": "Lichess puzzles once the day's studying is done. No bullet, ever."},
+      {"name": "Reading", "text": "Ten pages of a real paper book before bed. Right now: Iron Flame."},
+      {"name": "Writing", "text": "This site. Rough pieces, posted anyway."},
+      {"name": "Stoicism", "text": "Seneca, Marcus Aurelius and Epictetus."},
+      {"name": "Exercise", "text": "A little every day."},
+      {"name": "Piano", "text": "Someday soon. Saving up for a keyboard."}
+    ]
   },
+  "news": [
+    {"date": "2026-11-24", "text": "New plan: Python first, then data structures and algorithms. The EECS curriculum is retired."},
+    {"date": "2026-11-24", "text": "The writing room got a makeover: filters, word counts and an I'm Feeling Lucky! button."}
+  ],
   "writing_intro": [
-    "This is my daily writing practice. I write something every day, because writing is a skill I'm working to get better at, and right now I'm not a good writer.",
+    "This is my writing practice. Writing is a skill I'm working to get better at, and right now I'm not a good writer.",
     "Expect random pieces: things I learn while studying, short stories, and whatever's on my mind. Some will be rough. That's the point."
   ],
-  "add_experience": [
-    {
-      "role": "Produce Clerk — Kroger",
-      "period": "Oct 2026 – Present"
-    }
-  ],
-  "skill_overrides": {
-    "Technical Systems": "Linux (daily user since 2023, Arch), Shell Scripting, Git, PC Setup & Hardware Diagnostics, POS Systems, Microsoft Office (Excel, Outlook), Full-Stack Web Technologies"
+  "writing_kinds": {
+    "iteration": "Story",
+    "why-your-computer-has-walls-inside-it": "Study notes",
+    "how-will-it-feel-when-i-reach-it": "Personal",
+    "do-inventions-eliminate-social-barriers-or-just-move-them-elsewhere": "Essay"
   }
 }

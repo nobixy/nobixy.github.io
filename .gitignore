@@ -1,3 +1,5 @@
-# Drafts stay on this machine until they are published from the study dashboard.
+# Drafts stay on this machine until `python3 write.py publish` moves them into posts/.
 drafts/
 __pycache__/
+# The retired Obsidian study dashboard used to export this; the site now reads data/profile.json.
+data/resume.json

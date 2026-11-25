@@ -69,6 +69,31 @@
     if (event.target instanceof Element && event.target.closest('a[href]') && !leaving && !html.classList.contains('dialing-in')) say('Document: Done');
   });
 
+  // The writing room: filter by kind (the full list still shows with JavaScript off), and a random piece.
+  const tabs = document.querySelector('.kind-tabs');
+  if (tabs) {
+    tabs.hidden = false;
+    const items = [...document.querySelectorAll('.archive .posts li')];
+    const months = [...document.querySelectorAll('.archive .month')];
+    const empty = document.querySelector('.filter-empty');
+    tabs.addEventListener('click', (event) => {
+      const tab = event.target instanceof Element && event.target.closest('.kind-tab');
+      if (!tab) return;
+      if (tab.hasAttribute('data-lucky')) {
+        const shown = items.filter((li) => !li.hidden);
+        const pick = shown[Math.floor(Math.random() * shown.length)];
+        if (pick) { say('Picking something at random...'); pick.querySelector('a').click(); }
+        return;
+      }
+      const kind = tab.dataset.kind;
+      tabs.querySelectorAll('[data-kind]').forEach((t) => t.setAttribute('aria-pressed', String(t === tab)));
+      items.forEach((li) => { li.hidden = Boolean(kind) && li.dataset.kind !== kind; });
+      months.forEach((m) => { m.hidden = !m.querySelector('li:not([hidden])'); });
+      if (empty) empty.hidden = items.some((li) => !li.hidden);
+      say(kind ? `Showing: ${kind}` : 'Showing: all writing');
+    });
+  }
+
   window.addEventListener('pageshow', (event) => {
     leaving = false;
     html.classList.remove('page-leaving');
