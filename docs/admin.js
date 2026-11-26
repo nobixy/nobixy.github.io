@@ -941,6 +941,7 @@
     const body = el.body.value, n = words(body);
     return [
       { ok: !!el.title.value.trim(), text: 'Has a title', block: true },
+      { ok: !!body.trim(), text: 'Has writing in the body', block: true },
       { ok: !PHONE.test(body + el.title.value + el.desc.value), text: 'No phone numbers (privacy)', block: true },
       { ok: !EMAIL.test(body + el.desc.value), text: 'No email addresses (privacy)', block: true },
       { ok: !!el.desc.value.trim(), text: 'One-line summary (shows in lists and link previews)' },
