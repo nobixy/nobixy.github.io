@@ -555,6 +555,7 @@
   const dueAt = (p) => (p.answers.length ? lastT(p) + REVISIT_DAYS[Math.min(p.answers.length - 1, REVISIT_DAYS.length - 1)] * DAY : null);
   const dueNow = () => allPrompts().filter((p) => { const d = dueAt(p); return d && d <= Date.now(); });
   const prevAnswers = (b) => { const p = promptById(b.pid); return p ? p.answers.filter((a) => a.draftId !== cur.id).sort((x, y) => x.t - y.t) : []; };
+  const comparedAnswer = (b) => { const prev = prevAnswers(b); return prev.find((a) => a.t === b.cmpWith) || prev.at(-1); };
 
   function recordAnswer() {
     const b = cur && cur.build; if (!b || !b.pid) return;
@@ -631,7 +632,7 @@
 
   function draftFromPlan() {
     const b = cur.build, out = [];
-    const then = b.revisit && b.openThen && prevAnswers(b).at(-1);
+    const then = b.revisit && b.openThen && comparedAnswer(b);
     if (then && then.point) out.push(`> On ${mmddyy(then.t)} I wrote: "${then.point}"`);
     for (const x of b.beats) out.push(beatLine(x));
     b.placed = b.beats.map((x) => x.label);
@@ -689,7 +690,7 @@
   const pointLine = (b) => (b.point.trim() ? `<p class="ws-point"><b>POINT</b> ${esc(b.point)}</p>` : '<p class="ws-note">No point sentence yet. <button type="button" class="ws-linkbtn" data-stage-go="point">Find it</button> before you plan.</p>');
 
   function compareHtml(b) {
-    const prev = prevAnswers(b), then = prev.find((a) => a.t === b.cmpWith) || prev.at(-1);
+    const prev = prevAnswers(b), then = comparedAnswer(b);
     if (!then) return '<p class="ws-empty">No earlier answer to compare with.</p>';
     const A = wordFreq(`${then.freewrite} ${then.point}`), B = wordFreq(`${cur.freewrite || ''} ${b.point}`);
     const only = (X, Y) => [...X].filter(([w]) => !Y.has(w)).sort((x, y) => y[1] - x[1]).slice(0, 8).map(([w]) => esc(w)).join(', ') || '-';
