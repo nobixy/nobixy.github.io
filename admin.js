@@ -639,7 +639,8 @@
     const b = cur && cur.build; if (!b) return;
     if (s === 'publish') { publishDialog(); return; }
     persist();
-    if ((['point', 'compare'].includes(b.stage) && b.point.trim()) || s === 'kept') recordAnswer();
+    // Any freewrite counts as an answer, even when you skip steps, so the prompt still comes back for a revisit.
+    if ((cur.freewrite || '').trim() || b.point.trim() || s === 'kept') recordAnswer();
     if (s === 'draft' && !cur.body.trim()) {
       cur.body = b.beats.length ? draftFromPlan() : cur.freewrite || '';
       if (b.shape && !el.kind.value.trim()) el.kind.value = SHAPES[b.shape].kind;
