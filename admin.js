@@ -611,6 +611,7 @@
     const f = field();
     el.body.value = cur[f] || '';
     el.body.readOnly = f === 'freewrite' && cur.build.stage !== 'freewrite';
+    $$('.ws-format [data-fmt]').forEach((button) => { button.disabled = el.body.readOnly; });
     el.body.placeholder = f !== 'freewrite' ? "Start anywhere. Don't fix anything yet. Keep the pen moving."
       : el.body.readOnly ? 'Your freewrite is locked: it is the record of your first thoughts.' : 'Answer the prompt. Fast. No fixing. Keep the pen moving.';
     lastCount = words(el.body.value); sessionStart = lastCount;
@@ -879,6 +880,7 @@
 
   // ------------------------------------------------------------------ formatting
   function wrap(before, after = before, placeholder = 'text') {
+    if (el.body.readOnly) { say('Your freewrite is locked. Return to Freewrite to edit it.'); return; }
     const { selectionStart: a, selectionEnd: b, value: v } = el.body;
     const mid = v.slice(a, b) || placeholder;
     el.body.setRangeText(before + mid + after, a, b, 'end');
@@ -886,6 +888,7 @@
     el.body.focus(); el.body.dispatchEvent(new Event('input'));
   }
   function linePrefix(prefix) {
+    if (el.body.readOnly) { say('Your freewrite is locked. Return to Freewrite to edit it.'); return; }
     const { selectionStart: a, value: v } = el.body;
     const ls = v.lastIndexOf('\n', a - 1) + 1;
     el.body.setRangeText(prefix, ls, ls, 'end');
