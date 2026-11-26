@@ -91,7 +91,10 @@
       cur.snapshots = cur.snapshots.slice(-30);
     }
     drafts[cur.id] = cur;
-    try { store.set('ws.drafts', drafts); $('#ws-saved').textContent = `saved ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`; }
+    try {
+      store.set('ws.drafts', drafts);
+      if (cur.build && ((cur.freewrite || '').trim() || (cur.build.point || '').trim() || cur.build.answered)) recordAnswer();
+      $('#ws-saved').textContent = `saved ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`; }
     catch { say('Browser storage is full: delete old drafts in Open.'); }
   }
   const autosave = debounce(() => persist(), 700);
@@ -562,7 +565,6 @@
     b.answered = true;
     savePrompts();
   }
-  const recordSoon = debounce(recordAnswer, 800);
 
   const SHAPES = {
     story: { name: 'Story', kind: 'Story', what: 'Something happened and it changed you.', beats: [
@@ -779,7 +781,6 @@
     else if (t.dataset.beat != null && b.beats[+t.dataset.beat]) b.beats[+t.dataset.beat].note = t.value;
     else return;
     autosave();
-    if (b.answered) recordSoon();
   });
 
   // ------------------------------------------------------------------ new piece + prompt journal dialogs
@@ -802,6 +803,7 @@
   }
 
   function renderJournal() {
+    persist();
     const ps = allPrompts().filter((p) => p.answers.length).sort((a, b) => lastT(b) - lastT(a));
     $('#ws-journal-body').innerHTML = `<p class="ws-note">Every prompt you've answered, every time you answered it. Kept on this computer only, so export a backup now and then.</p>
       <p class="ws-choices"><button type="button" class="dlg-btn" data-export>Export backup</button><label class="dlg-btn ws-file">Import backup<input type="file" id="ws-import" accept=".json,application/json" hidden></label></p>
@@ -813,6 +815,7 @@
   }
 
   function exportBackup() {
+    persist();
     const data = { v: 1, exported: new Date().toISOString(), drafts, prompts: saved, log: store.get('ws.log', {}) };
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
