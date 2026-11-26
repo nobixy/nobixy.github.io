@@ -770,7 +770,13 @@
     }
     const c = t.closest('[data-cand]'); if (c) { b.point = cands[+c.dataset.cand] || b.point; persist(); renderBuild(); return; }
     const sh = t.closest('[data-shape]'); if (sh) { pickShape(sh.dataset.shape); return; }
-    if (t.closest('[data-beat-add]')) { b.beats.push({ label: `Beat ${b.beats.length + 1}`, help: 'Give it one job.', note: '' }); persist(); renderBuild(); return; }
+    if (t.closest('[data-beat-add]')) {
+      const used = new Set([...b.beats.map((beat) => beat.label), ...(b.placed || [])]);
+      let number = b.beats.length + 1;
+      while (used.has(`Beat ${number}`)) number++;
+      b.beats.push({ label: `Beat ${number}`, help: 'Give it one job.', note: '' });
+      persist(); renderBuild(); return;
+    }
     const del = t.closest('[data-beat-del]'); if (del) { b.beats.splice(+del.dataset.beatDel, 1); persist(); renderBuild(); return; }
     const cmp = t.closest('[data-cmp]'); if (cmp) { b.cmpWith = +cmp.dataset.cmp; persist(); renderBuild(); return; }
     const ot = t.closest('[data-open-tab]'); if (ot) { if (mode !== 'revise') setMode('revise'); $(`.ws-tabs [data-tab="${ot.dataset.openTab}"]`).click(); }
