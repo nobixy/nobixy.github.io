@@ -80,6 +80,7 @@
     bindField();
     store.set('ws.current', d.id);
     renderBuild();
+    setMode(d.build && d.build.stage === 'revise' ? 'revise' : 'draft');
     refresh();
   }
   function persist(snapshot = false) {
@@ -644,10 +645,10 @@
     persist();
     // Any freewrite counts as an answer, even when you skip steps, so the prompt still comes back for a revisit.
     if ((cur.freewrite || '').trim() || b.point.trim() || s === 'kept') recordAnswer();
-    if (s === 'draft' && !cur.body.trim()) {
+    if (['draft', 'revise'].includes(s) && !cur.body.trim()) {
       cur.body = b.beats.length ? draftFromPlan() : cur.freewrite || '';
       if (b.shape && !el.kind.value.trim()) el.kind.value = SHAPES[b.shape].kind;
-    } else if (s === 'draft' && b.beats.length) {
+    } else if (['draft', 'revise'].includes(s) && b.beats.length) {
       // Back from Plan with a draft already going: add only the beats that never made it into the draft.
       const placed = new Set(b.placed || b.beats.filter((x) => cur.body.includes(`TK ${x.label}`)).map((x) => x.label));
       const fresh = b.beats.filter((x) => !placed.has(x.label));
@@ -656,7 +657,7 @@
     b.stage = s;
     if (s === 'plan' && !b.shape && b.revisit) pickShape('reflect', false);
     bindField(); persist();
-    if (s === 'revise') setMode('revise'); else if (mode === 'revise' && FW_STAGES.has(s)) setMode('draft');
+    setMode(s === 'revise' ? 'revise' : 'draft');
     renderBuild(); refresh();
     if (s === 'draft') { const i = el.body.value.indexOf('TK '); el.body.focus(); if (i >= 0) el.body.setSelectionRange(i, el.body.value.indexOf('\n', i)); }
     else if (!el.body.readOnly) el.body.focus();
@@ -1031,7 +1032,6 @@
     if (booted) return; booted = true;
     const id = store.get('ws.current', null);
     load(drafts[id] || Object.values(drafts).sort((a, b) => b.updated - a.updated)[0] || newDraft());
-    setMode('draft');
     try {
       kindsMap = JSON.parse(await readFile('site.json')).writing_kinds || {};
     } catch { kindsMap = {}; }
