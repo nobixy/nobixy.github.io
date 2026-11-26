@@ -75,9 +75,11 @@
   const newDraft = () => ({ id: `d${crypto.randomUUID()}`, title: '', desc: '', kind: '', body: '', created: Date.now(), updated: Date.now(), snapshots: [], revised: false, readAloud: false });
 
   function load(d) {
+    stopReading();
     cur = d;
     el.title.value = d.title; el.desc.value = d.desc; el.kind.value = d.kind;
     bindField();
+    syncCompass();
     store.set('ws.current', d.id);
     renderBuild();
     setMode(d.build && d.build.stage === 'revise' ? 'revise' : 'draft');
@@ -148,13 +150,57 @@
   // ------------------------------------------------------------------ modes: draft vs revise
   let mode = 'draft';
   function setMode(m) {
+    const enteringRevision = mode !== 'revise' && m === 'revise';
     mode = m;
+    syncCompass();
+    $('#ws-brief').open = m === 'revise';
+    if (enteringRevision) selectTab('outline');
     ws.dataset.mode = m;
     $$('.ws-mode').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
     el.body.spellcheck = m === 'revise';
     $('#ws-hint').textContent = m === 'draft' ? 'Draft mode: just write. Checks wait for Revise.' : 'Revise mode: big things first (Outline), then sentences (Feedback).';
     if (m === 'revise' && cur) { cur.revised = true; persist(true); analyze(); }
   }
+
+  function syncCompass() {
+    if (!cur) return;
+    const brief = cur.build || cur.brief || {};
+    $('#ws-reader').value = brief.who || '';
+    $('#ws-point').value = brief.point || '';
+    $('#ws-next').value = cur.next || '';
+  }
+  $('#ws-brief').addEventListener('input', (e) => {
+    if (!cur) return;
+    const brief = cur.build || (cur.brief ||= {});
+    if (e.target.id === 'ws-reader') brief.who = e.target.value;
+    else if (e.target.id === 'ws-point') brief.point = e.target.value;
+    else if (e.target.id === 'ws-next') cur.next = e.target.value;
+    else return;
+    renderBuild(); autosave();
+  });
+  function selectTab(name) {
+    $$('.ws-tabs [data-tab]').forEach(b => {
+      const selected = b.dataset.tab === name;
+      b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1;
+    });
+    $$('.ws-pane').forEach(p => { p.hidden = p.id !== `ws-pane-${name}`; });
+  }
+  $('.ws-tabs').addEventListener('keydown', (e) => {
+    const tabs = $$('.ws-tabs [data-tab]'), at = tabs.indexOf(e.target);
+    if (at < 0 || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const i = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (at + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    selectTab(tabs[i].dataset.tab); tabs[i].focus(); analyze();
+  });
+  function toggleFocus(force) {
+    const focused = force ?? !ws.classList.contains('ws-focused');
+    ws.classList.toggle('ws-focused', focused);
+    const button = $('[data-act="focus"]');
+    button.setAttribute('aria-pressed', String(focused));
+    button.innerHTML = `<span aria-hidden="true">#</span>${focused ? 'Exit focus' : 'Focus'}`;
+    if (focused) { el.body.focus(); say('Focus on the writing. Press Escape to return to your desk.'); }
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) toggleFocus(false); });
 
   // ------------------------------------------------------------------ feedback (Orwell + plain English)
   const SWAPS = { utilize: 'use', utilise: 'use', utilization: 'use', commence: 'start', approximately: 'about', demonstrate: 'show', facilitate: 'help', individuals: 'people', numerous: 'many', purchase: 'buy', sufficient: 'enough', assistance: 'help', endeavor: 'try', endeavour: 'try', terminate: 'end', obtain: 'get', additional: 'more', subsequently: 'later', regarding: 'about', initiate: 'start', ascertain: 'find out', possess: 'have', residence: 'home', inquire: 'ask', require: 'need', methodology: 'method', functionality: 'feature', 'prior to': 'before', 'in order to': 'to', 'due to the fact that': 'because', 'at this point in time': 'now', 'in the event that': 'if', 'a large number of': 'many', 'the majority of': 'most', 'has the ability to': 'can', 'is able to': 'can', 'with regard to': 'about', 'for the purpose of': 'to', 'in spite of the fact that': 'although' };
@@ -324,7 +370,7 @@
       <text x="${L - 4}" y="${y(0) + 3}" text-anchor="end" class="ws-ax">0</text><text x="${L - 4}" y="${y(max) + 6}" text-anchor="end" class="ws-ax">${max.toFixed(0)}</text>
       ${base}<path d="${path}" fill="none" stroke="#000080" stroke-width="2"/>${dots}
       <text x="${L}" y="${H - 2}" class="ws-ax">first snapshot</text><text x="${W - R}" y="${H - 2}" text-anchor="end" class="ws-ax">now</text></svg>
-      <p class="ws-caption">${last < first ? `Down from <b>${first.toFixed(1)}</b> to <b>${last.toFixed(1)}</b> flags per 100 words. That's revision working.` : last > first ? `Up from <b>${first.toFixed(1)}</b> to <b>${last.toFixed(1)}</b> per 100 words. New writing adds flags. That's fine while drafting.` : `Flat at <b>${last.toFixed(1)}</b> per 100 words.`}</p>`;
+      <p class="ws-caption">${last < first ? `Down from <b>${first.toFixed(1)}</b> to <b>${last.toFixed(1)}</b> flags per 100 words. Check whether the meaning is stronger, too.` : last > first ? `Up from <b>${first.toFixed(1)}</b> to <b>${last.toFixed(1)}</b> per 100 words. New writing adds flags. That's fine while drafting.` : `Flat at <b>${last.toFixed(1)}</b> per 100 words.`}</p>`;
   }
 
   function tile(label, value, sub, base, better, fmt = (v) => v.toFixed(1)) {
@@ -337,7 +383,7 @@
   }
   function gradeGauge(g) {
     const pct = Math.max(0, Math.min(100, (g / 16) * 100));
-    return `<div class="ws-gauge" role="img" aria-label="Grade level ${g.toFixed(1)} on a 0 to 16 scale; 9 or less is clear"><span class="ws-gauge-ok"></span><i style="left:${pct}%"></i></div><p class="ws-axis-row"><span>0 easy</span><span>9</span><span>16 hard</span></p>`;
+    return `<div class="ws-gauge" role="img" aria-label="Estimated English reading grade ${g.toFixed(1)} on a 0 to 16 scale"><span class="ws-gauge-ok"></span><i style="left:${pct}%"></i></div><p class="ws-axis-row"><span>0 easy</span><span>9</span><span>16 hard</span></p>`;
   }
 
   let famFilter = new Set(Object.keys(FAMILIES));
@@ -377,8 +423,9 @@
     const openerNote = m.ns >= 6 && opc / m.ns > 0.25 ? `<p class="ws-caption"><b>${opc} of ${m.ns}</b> sentences start with "${esc(op)}". Vary how they open.</p>` : '';
     const topMax = m.top.length ? m.top[0][1] : 1;
     pane.innerHTML = `
+      <p class="ws-note"><b>Your judgment comes first.</b> These English-language heuristics suggest places to look. They cannot judge truth, voice, or whether your argument works. Fewer flags do not necessarily mean better writing.</p>
       <div class="ws-tiles">
-        <div class="ws-tile ws-tile-wide"><span class="ws-tile-label">GRADE LEVEL</span><strong>${m.grade > 0 ? m.grade.toFixed(1) : '-'}</strong><span class="ws-tile-sub">${m.grade <= 9 ? 'Clear. Most adults read this easily.' : 'Dense. Aim for 9 or less.'}</span>${gradeGauge(Math.max(0, m.grade))}${baseline ? tile('', m.grade, '', baseline.grade, 'lower').match(/<small[\s\S]*<\/small>/)[0] : ''}</div>
+        <div class="ws-tile ws-tile-wide"><span class="ws-tile-label">GRADE LEVEL</span><strong>${m.grade > 0 ? m.grade.toFixed(1) : '-'}</strong><span class="ws-tile-sub">An estimate of sentence and word complexity</span>${gradeGauge(Math.max(0, m.grade))}${baseline ? tile('', m.grade, '', baseline.grade, 'lower').match(/<small[\s\S]*<\/small>/)[0] : ''}</div>
         ${tile('READING EASE', Math.max(0, m.ease), '0-100, higher is easier', baseline && baseline.ease, 'higher', (v) => v.toFixed(0))}
         ${tile('WORDS / SENTENCE', m.avg, 'average', baseline && baseline.avg, 'lower')}
         ${tile('FLAGS / 100 WORDS', rate, `${issues.length} flags in ${m.wc} words`, baseline && baseline.per100, 'lower')}
@@ -465,7 +512,7 @@
     }
     const b = cur && cur.build;
     const plan = b && b.beats && b.beats.length ? `<h3 class="subheading">YOUR PLAN</h3>${b.point ? `<p class="ws-caption"><b>Point:</b> ${esc(b.point)}</p>` : ''}<ol class="ws-planlist">${b.beats.map((x) => `<li class="${raw.includes(`TK ${x.label}`) ? '' : 'done'}"><b>${esc(x.label)}</b> ${esc(x.note || '')}</li>`).join('')}</ol><p class="ws-note">Does each paragraph below do one beat's job? A paragraph with no beat is a candidate to cut. A beat with no paragraph is a hole.</p><h3 class="subheading">WHAT YOU WROTE</h3>` : '';
-    $('#ws-pane-outline').innerHTML = plan + (rows.length ? `<p class="ws-note">Revise big before small. Each paragraph's first sentence should say what it's for. If two say the same thing, merge them. If one goes nowhere, cut it.</p><ol class="ws-issues ws-outline">${rows.join('')}</ol>` : '<p class="ws-empty">No paragraphs yet.</p>');
+    $('#ws-pane-outline').innerHTML = plan + (rows.length ? `<p class="ws-note">Revise big before small. Read these opening lines as a map. Does the order help your reader? Where is a scene, example, or reason missing? A paragraph can earn its place without stating its purpose in its first sentence.</p><ol class="ws-issues ws-outline">${rows.join('')}</ol>` : '<p class="ws-empty">No paragraphs yet.</p>');
   }
 
   // ------------------------------------------------------------------ preview (escapes all HTML)
@@ -504,7 +551,7 @@
     if (!cur) return;
     const snaps = cur.snapshots.slice().reverse();
     $('#ws-pane-history').innerHTML = snaps.length ? `<p class="ws-note">Saved every 5 minutes while you write, and on Save, Revise and Publish. Last 30 kept.</p><ul class="ws-list">${snaps.map((s) =>
-      `<li><span>${new Date(s.t).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })} - ${words(s.body)} words</span><button type="button" class="dlg-btn" data-restore="${s.t}">Restore</button></li>`).join('')}</ul>` : '<p class="ws-empty">No snapshots yet.</p>';
+      `<li><span>${new Date(s.t).toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })} - ${words(s.body)} words<details><summary>Read this version</summary><div class="ws-fw">${esc(s.body)}</div></details></span><button type="button" class="dlg-btn" data-restore="${s.t}">Restore</button></li>`).join('')}</ul>` : '<p class="ws-empty">No snapshots yet.</p>';
   }
 
   // ------------------------------------------------------------------ build-up: prompt -> freewrite -> point -> plan -> draft
@@ -700,7 +747,7 @@
     const col = (label, a) => { const n = words(a.freewrite || ''); return `<div class="ws-tn-col"><h4>${label}</h4><blockquote>${a.point ? esc(a.point) : '<i>no point sentence</i>'}</blockquote><small>${n} word${n === 1 ? '' : 's'} of freewrite</small></div>`; };
     const pick = prev.length > 1 ? `<p class="ws-cmp-pick">Compare with: ${prev.map((a, i) => `<button type="button" class="ws-step${a === then ? ' now' : ''}" data-cmp="${a.t}">${i === 0 ? 'first ' : i === prev.length - 1 ? 'last ' : ''}${mmddyy(a.t)}</button>`).join('')}</p>` : '';
     return `${pick}<div class="ws-tn">${col(`THEN ${mmddyy(then.t)}`, then)}${col('NOW', { point: b.point, freewrite: cur.freewrite })}</div>
-      <p class="ws-caption">${gap} day${gap === 1 ? '' : 's'} apart. <b>${pct}%</b> of your words overlap. ${pct < 20 ? 'You came at it from somewhere new.' : pct > 45 ? 'Same ground. Is the thinking the same too?' : 'Some old ground, some new.'}</p>
+      <p class="ws-caption">${gap} day${gap === 1 ? '' : 's'} apart. <b>${pct}%</b> of your words overlap. This compares vocabulary, not meaning. What changed in your thinking?</p>
       <p class="ws-caption"><b>Only then:</b> ${only(A, B)}<br><b>Only now:</b> ${only(B, A)}</p>
       ${prev.length > 1 ? `<h3 class="subheading">EVERY TIME YOU ANSWERED</h3><ol class="ws-timeline">${prev.map((a) => `<li><b>${mmddyy(a.t)}</b> ${esc(a.point || '(no point)')}</li>`).join('')}<li><b>now</b> ${esc(b.point)}</li></ol>` : ''}
       <details class="ws-peek"><summary>Read the old freewrite</summary><div class="ws-fw">${esc(then.freewrite || '')}</div>${then.reflect ? `<p class="ws-caption"><b>What you said changed, back then:</b> ${esc(then.reflect)}</p>` : ''}</details>
@@ -789,7 +836,7 @@
     else if (t.id === 'ws-b-openthen') b.openThen = t.checked;
     else if (t.dataset.beat != null && b.beats[+t.dataset.beat]) b.beats[+t.dataset.beat].note = t.value;
     else return;
-    autosave();
+    syncCompass(); autosave();
   });
 
   // ------------------------------------------------------------------ new piece + prompt journal dialogs
@@ -869,16 +916,27 @@
   function beep() {
     try { const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0.05; o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + 0.25); } catch { /* no audio */ }
   }
-  let speaking = false;
+  let speaking = false, reading = null;
+  function stopReading() {
+    if (speaking) { reading = null; speechSynthesis.cancel(); speaking = false; }
+  }
   function readAloud() {
     if (!('speechSynthesis' in window)) { say('This browser cannot read aloud.'); return; }
-    if (speaking) { speechSynthesis.cancel(); speaking = false; say('Stopped reading.'); return; }
+    if (speaking) { stopReading(); say('Stopped reading.'); return; }
     const sel = el.body.value.slice(el.body.selectionStart, el.body.selectionEnd);
     const text = (sel.trim() ? sel : `${el.title.value}. ${el.body.value}`).replace(/```[\s\S]*?```/g, ' code block. ').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#*_`>]/g, '');
     const u = new SpeechSynthesisUtterance(text);
     u.rate = 0.95;
-    u.onend = () => { speaking = false; if (cur && !sel.trim()) { cur.readAloud = true; persist(); } say('Done reading. What sounded wrong?'); };
-    speechSynthesis.speak(u); speaking = true;
+    const session = { id: cur.id, body: el.body.value, title: el.title.value, field: field() };
+    reading = session;
+    u.onend = () => {
+      if (reading !== session) return;
+      speaking = false; reading = null;
+      if (cur.id === session.id && field() === 'body' && session.field === 'body' && el.body.value === session.body && el.title.value === session.title && !sel.trim()) { cur.readAloud = true; persist(); }
+      say('Done reading. What sounded wrong?');
+    };
+    u.onerror = () => { if (reading === session) { speaking = false; reading = null; say('Reading stopped. You can try again or read the piece aloud yourself.'); } };
+    speaking = true; speechSynthesis.speak(u);
     say('Reading aloud. Listen for where you stumble. Click Read aloud again to stop.');
   }
 
@@ -1077,7 +1135,7 @@
   }
 
   for (const k of ['title', 'desc', 'kind']) el[k].addEventListener('input', () => { autosave(); refresh(); });
-  el.body.addEventListener('input', () => { track(); autosave(); refresh(); });
+  el.body.addEventListener('input', () => { if (cur) cur.readAloud = false; track(); autosave(); refresh(); });
   el.body.addEventListener('keydown', (e) => {
     if (sprint && sprint.nobs && (e.key === 'Backspace' || e.key === 'Delete')) { e.preventDefault(); say('Keep going. Fix it later.'); }
   });
@@ -1101,7 +1159,7 @@
       else if (a === 'save') { persist(true); say('Saved on this computer. It goes public only when you Publish.'); }
       else if (a === 'sprint') $('#ws-sprint').showModal();
       else if (a === 'aloud') readAloud();
-      else if (a === 'focus') { if (document.fullscreenElement) document.exitFullscreen(); else ws.requestFullscreen().catch(() => say('Full screen is blocked here.')); }
+      else if (a === 'focus') toggleFocus();
       else if (a === 'publish') publishDialog();
       else if (a === 'logout') { persist(); logout(); }
     }
@@ -1109,8 +1167,7 @@
     if (modeBtn) setMode(modeBtn.dataset.mode);
     if (fmt) FMT[fmt.dataset.fmt]();
     if (tab) {
-      $$('.ws-tabs [data-tab]').forEach((b) => b.setAttribute('aria-pressed', String(b === tab)));
-      $$('.ws-pane').forEach((p) => { p.hidden = p.id !== `ws-pane-${tab.dataset.tab}`; });
+      selectTab(tab.dataset.tab);
       analyze();
     }
     const spot = issue || t.closest('.ws-hit, .ws-mark');

@@ -24,3 +24,8 @@ test('counts accented words and contractions without splitting letters', () => {
   assert.equal(words('naïve café isn’t déjà-vu'),4);
   assert.equal(words('... — ***'),0);
 });
+test('blank-page writing carries reader context into search and export', () => {
+  const d={...newer,path:undefined,brief:{who:'A tired apprentice',point:'Ask before fixing'},next:'Add the scene'};
+  assert.deepEqual(findDrafts([d],'apprentice fixing').map(d=>d.id),['b']);
+  for(const text of ['A tired apprentice','Ask before fixing','Add the scene']) assert.ok(markdownExport(d).includes(text));
+});

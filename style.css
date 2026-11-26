@@ -705,3 +705,18 @@ a.focus-where { color: var(--link); }
 .ws-library-actions { display: flex; gap: 5px; flex-wrap: wrap; }
 #ws-open-drafts > li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 #ws-open-drafts small { display: block; margin-top: 4px; }
+
+.ws-brief { margin: 8px 12px; border: 1px solid #9999aa; background: #f6f6ee; }
+.ws-brief summary { padding: 9px; cursor: pointer; font-weight: bold; color: #333366; }
+.ws-brief summary span { font-weight: normal; font-size: 12px; }
+.ws-brief-fields { padding: 0 12px 10px; display: grid; gap: 6px; }
+.ws-brief-fields label { font: bold 12px var(--chrome-font); margin-top: 5px; }
+.ws-brief-fields input, .ws-brief-fields textarea { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; font: 15px/1.5 var(--body-font); }
+.ws-tabs [aria-selected='true'] { font-weight: bold; background: white; box-shadow: var(--sunken); }
+.ws-focused { position: fixed; inset: 0; z-index: 100; margin: 0; overflow-y: auto; padding: 10px; background: #f6f6ee; }
+.ws-focused .ws-grid { display: block; }
+.ws-focused .ws-side, .ws-focused .ws-bottom, .ws-focused .ws-meta, .ws-focused .ws-build, .ws-focused .ws-brief { display: none; }
+.ws-focused .ws-paper { max-width: 850px; margin: 12px auto; }
+.ws-focused #ws-body { min-height: 75vh; }
+.ws-focused .ws-statusbar { max-width: 850px; margin: 0 auto; }
+.ws-brief :focus-visible, .ws-tabs :focus-visible, #ws-body:focus-visible { outline: 2px solid #006600; outline-offset: 2px; }

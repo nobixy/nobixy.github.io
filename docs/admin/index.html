@@ -13,11 +13,11 @@
 <meta name="theme-color" content="#000080">
 <link rel="alternate" type="application/rss+xml" title="Joseph Noblett: writing" href="/feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000080%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffff00%22/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/style.css?v=4cdf9cd55404">
+<link rel="stylesheet" href="/style.css?v=15802aaf325e">
 <script src="/site.js?v=5dda8e1f30e4" defer></script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<script src="/admin-core.js?v=db9da8d74d04" defer></script><script src="/admin.js?v=db9da8d74d04" defer></script>
+<script src="/admin-core.js?v=60846e79ddb6" defer></script><script src="/admin.js?v=60846e79ddb6" defer></script>
 <noscript><style>html.dialing-in main { animation: none; }</style></noscript>
 </head>
 <body>
@@ -92,7 +92,7 @@
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn" data-act="sprint"><span aria-hidden="true">@</span>Sprint</button>
     <button type="button" class="tbtn" data-act="aloud"><span aria-hidden="true">"</span>Read aloud</button>
-    <button type="button" class="tbtn" data-act="focus"><span aria-hidden="true">#</span>Full screen</button>
+    <button type="button" class="tbtn" data-act="focus" aria-pressed="false"><span aria-hidden="true">#</span>Focus</button>
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn ws-publish" data-act="publish"><span aria-hidden="true">!</span>Publish</button>
     <button type="button" class="tbtn" data-act="logout"><span aria-hidden="true">X</span>Log off</button>
@@ -107,6 +107,12 @@
         <label class="ws-kind-label">Kind <input id="ws-kind" list="ws-kinds" placeholder="Essay"><datalist id="ws-kinds"></datalist></label>
       </div>
       <div class="ws-build" id="ws-build" hidden></div>
+      <details class="ws-brief" id="ws-brief"><summary>Your writing compass <span>reader · point · next session</span></summary>
+        <div class="ws-brief-fields"><label for="ws-reader">Who am I writing for?</label><input id="ws-reader" maxlength="500" placeholder="One person, and what they need from this piece">
+        <label for="ws-point">What should stay with them?</label><textarea id="ws-point" rows="2" maxlength="1000" placeholder="The idea, feeling, or question at the heart of this piece"></textarea>
+        <label for="ws-next">Where will I pick up next time?</label><textarea id="ws-next" rows="2" maxlength="1000" placeholder="One concrete move: add the scene, check a claim, rethink the ending..."></textarea>
+        <p class="ws-note">Private working notes. Saved with this piece; never published.</p></div>
+      </details>
       <div class="ws-format" role="toolbar" aria-label="Formatting">
         <button type="button" data-fmt="h2" title="Heading">H2</button><button type="button" data-fmt="b" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-fmt="i" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-fmt="q" title="Quote">&gt;</button><button type="button" data-fmt="ul" title="List">*</button><button type="button" data-fmt="link" title="Link (Ctrl+K)">link</button><button type="button" data-fmt="code" title="Code">`c`</button>
         <span class="ws-hint" id="ws-hint">Draft mode: just write. Checks wait for Revise.</span>
@@ -116,17 +122,17 @@
 
     <aside class="ws-side" aria-label="Revision tools">
       <div class="kind-tabs ws-tabs" role="tablist">
-        <button type="button" class="kind-tab" role="tab" aria-pressed="true" data-tab="feedback">Feedback</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="marked">Marked</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="preview">Preview</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="outline">Outline</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="history">History</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-feedback" aria-controls="ws-pane-feedback" aria-selected="true" tabindex="0" data-tab="feedback">Feedback</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-marked" aria-controls="ws-pane-marked" aria-selected="false" tabindex="-1" data-tab="marked">Marked</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-preview" aria-controls="ws-pane-preview" aria-selected="false" tabindex="-1" data-tab="preview">Preview</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-outline" aria-controls="ws-pane-outline" aria-selected="false" tabindex="-1" data-tab="outline">Outline</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-history" aria-controls="ws-pane-history" aria-selected="false" tabindex="-1" data-tab="history">History</button>
       </div>
-      <div class="ws-pane" id="ws-pane-feedback" role="tabpanel"></div>
-      <div class="ws-pane" id="ws-pane-marked" role="tabpanel" hidden></div>
-      <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" hidden></div>
-      <div class="ws-pane" id="ws-pane-outline" role="tabpanel" hidden></div>
-      <div class="ws-pane" id="ws-pane-history" role="tabpanel" hidden></div>
+      <div class="ws-pane" id="ws-pane-feedback" role="tabpanel" aria-labelledby="ws-tab-feedback" tabindex="0"></div>
+      <div class="ws-pane" id="ws-pane-marked" role="tabpanel" aria-labelledby="ws-tab-marked" tabindex="0" hidden></div>
+      <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" aria-labelledby="ws-tab-preview" tabindex="0" hidden></div>
+      <div class="ws-pane" id="ws-pane-outline" role="tabpanel" aria-labelledby="ws-tab-outline" tabindex="0" hidden></div>
+      <div class="ws-pane" id="ws-pane-history" role="tabpanel" aria-labelledby="ws-tab-history" tabindex="0" hidden></div>
     </aside>
   </div>
 

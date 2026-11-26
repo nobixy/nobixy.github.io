@@ -35,7 +35,7 @@
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn" data-act="sprint"><span aria-hidden="true">@</span>Sprint</button>
     <button type="button" class="tbtn" data-act="aloud"><span aria-hidden="true">"</span>Read aloud</button>
-    <button type="button" class="tbtn" data-act="focus"><span aria-hidden="true">#</span>Full screen</button>
+    <button type="button" class="tbtn" data-act="focus" aria-pressed="false"><span aria-hidden="true">#</span>Focus</button>
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn ws-publish" data-act="publish"><span aria-hidden="true">!</span>Publish</button>
     <button type="button" class="tbtn" data-act="logout"><span aria-hidden="true">X</span>Log off</button>
@@ -50,6 +50,12 @@
         <label class="ws-kind-label">Kind <input id="ws-kind" list="ws-kinds" placeholder="Essay"><datalist id="ws-kinds"></datalist></label>
       </div>
       <div class="ws-build" id="ws-build" hidden></div>
+      <details class="ws-brief" id="ws-brief"><summary>Your writing compass <span>reader · point · next session</span></summary>
+        <div class="ws-brief-fields"><label for="ws-reader">Who am I writing for?</label><input id="ws-reader" maxlength="500" placeholder="One person, and what they need from this piece">
+        <label for="ws-point">What should stay with them?</label><textarea id="ws-point" rows="2" maxlength="1000" placeholder="The idea, feeling, or question at the heart of this piece"></textarea>
+        <label for="ws-next">Where will I pick up next time?</label><textarea id="ws-next" rows="2" maxlength="1000" placeholder="One concrete move: add the scene, check a claim, rethink the ending…"></textarea>
+        <p class="ws-note">Private working notes. Saved with this piece; never published.</p></div>
+      </details>
       <div class="ws-format" role="toolbar" aria-label="Formatting">
         <button type="button" data-fmt="h2" title="Heading">H2</button><button type="button" data-fmt="b" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-fmt="i" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-fmt="q" title="Quote">&gt;</button><button type="button" data-fmt="ul" title="List">*</button><button type="button" data-fmt="link" title="Link (Ctrl+K)">link</button><button type="button" data-fmt="code" title="Code">`c`</button>
         <span class="ws-hint" id="ws-hint">Draft mode: just write. Checks wait for Revise.</span>
@@ -59,17 +65,17 @@
 
     <aside class="ws-side" aria-label="Revision tools">
       <div class="kind-tabs ws-tabs" role="tablist">
-        <button type="button" class="kind-tab" role="tab" aria-pressed="true" data-tab="feedback">Feedback</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="marked">Marked</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="preview">Preview</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="outline">Outline</button>
-        <button type="button" class="kind-tab" role="tab" aria-pressed="false" data-tab="history">History</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-feedback" aria-controls="ws-pane-feedback" aria-selected="true" tabindex="0" data-tab="feedback">Feedback</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-marked" aria-controls="ws-pane-marked" aria-selected="false" tabindex="-1" data-tab="marked">Marked</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-preview" aria-controls="ws-pane-preview" aria-selected="false" tabindex="-1" data-tab="preview">Preview</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-outline" aria-controls="ws-pane-outline" aria-selected="false" tabindex="-1" data-tab="outline">Outline</button>
+        <button type="button" class="kind-tab" role="tab" id="ws-tab-history" aria-controls="ws-pane-history" aria-selected="false" tabindex="-1" data-tab="history">History</button>
       </div>
-      <div class="ws-pane" id="ws-pane-feedback" role="tabpanel"></div>
-      <div class="ws-pane" id="ws-pane-marked" role="tabpanel" hidden></div>
-      <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" hidden></div>
-      <div class="ws-pane" id="ws-pane-outline" role="tabpanel" hidden></div>
-      <div class="ws-pane" id="ws-pane-history" role="tabpanel" hidden></div>
+      <div class="ws-pane" id="ws-pane-feedback" role="tabpanel" aria-labelledby="ws-tab-feedback" tabindex="0"></div>
+      <div class="ws-pane" id="ws-pane-marked" role="tabpanel" aria-labelledby="ws-tab-marked" tabindex="0" hidden></div>
+      <div class="ws-pane post-content" id="ws-pane-preview" role="tabpanel" aria-labelledby="ws-tab-preview" tabindex="0" hidden></div>
+      <div class="ws-pane" id="ws-pane-outline" role="tabpanel" aria-labelledby="ws-tab-outline" tabindex="0" hidden></div>
+      <div class="ws-pane" id="ws-pane-history" role="tabpanel" aria-labelledby="ws-tab-history" tabindex="0" hidden></div>
     </aside>
   </div>
 

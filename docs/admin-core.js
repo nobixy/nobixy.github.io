@@ -10,17 +10,18 @@
       if (filter === 'published' && !d.path) return false;
       if (filter === 'journal' && (d.path || d.build?.stage !== 'kept')) return false;
       if (filter === 'drafts' && (d.path || d.build?.stage === 'kept')) return false;
-      const text = [d.title, d.desc, d.kind, d.body, d.freewrite, d.next, d.build?.text, d.build?.point, d.build?.who, d.build?.reflect, ...(d.build?.beats || []).map(b => b.note)].join(' ').toLocaleLowerCase();
+      const text = [d.title, d.desc, d.kind, d.body, d.freewrite, d.next, d.build?.text, d.build?.point, d.build?.who, d.build?.reflect, d.brief?.point, d.brief?.who, ...(d.build?.beats || []).map(b => b.note)].join(' ').toLocaleLowerCase();
       return terms.every(term => text.includes(term));
     }).sort((a, b) => b.updated - a.updated);
   }
   function markdownExport(d) {
     const sections = [`# ${draftLabel(d)}`, d.body || ''];
-    if (d.freewrite || d.build || d.next) {
+    const brief = d.build || d.brief;
+    if (d.freewrite || brief || d.next) {
       sections.push('---', '## Working notes');
       if (d.build?.text) sections.push('### Prompt', d.build.text);
-      if (d.build?.point) sections.push('### Point', d.build.point);
-      if (d.build?.who) sections.push('### Reader', d.build.who);
+      if (brief?.point) sections.push('### Point', brief.point);
+      if (brief?.who) sections.push('### Reader', brief.who);
       if (d.next) sections.push('### Next session', d.next);
       if (d.build?.beats?.length) sections.push('### Plan', d.build.beats.map(b => `- ${b.label}: ${b.note || ''}`).join('\n'));
       if (d.build?.reflect) sections.push('### What changed', d.build.reflect);
