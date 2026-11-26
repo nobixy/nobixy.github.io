@@ -697,3 +697,4 @@ a.focus-where { color: var(--link); }
 .ws-file { cursor: pointer; }
 #ws-body[readonly] { background: #f8f8f0; }
 @media (max-width: 930px) { .ws-tn { grid-template-columns: 1fr; } }
+.ws-cmp-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin: 0 0 6px; font: bold 12px var(--chrome-font); }

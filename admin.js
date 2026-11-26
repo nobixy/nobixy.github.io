@@ -685,15 +685,16 @@
   const pointLine = (b) => (b.point.trim() ? `<p class="ws-point"><b>POINT</b> ${esc(b.point)}</p>` : '<p class="ws-note">No point sentence yet. <button type="button" class="ws-linkbtn" data-stage-go="point">Find it</button> before you plan.</p>');
 
   function compareHtml(b) {
-    const prev = prevAnswers(b), then = prev.at(-1);
+    const prev = prevAnswers(b), then = prev.find((a) => a.t === b.cmpWith) || prev.at(-1);
     if (!then) return '<p class="ws-empty">No earlier answer to compare with.</p>';
     const A = wordFreq(`${then.freewrite} ${then.point}`), B = wordFreq(`${cur.freewrite || ''} ${b.point}`);
     const only = (X, Y) => [...X].filter(([w]) => !Y.has(w)).sort((x, y) => y[1] - x[1]).slice(0, 8).map(([w]) => esc(w)).join(', ') || '-';
     const union = new Set([...A.keys(), ...B.keys()]).size, shared = [...A.keys()].filter((w) => B.has(w)).length;
     const pct = union ? Math.round((shared * 100) / union) : 0;
     const gap = Math.round((Date.now() - then.t) / DAY);
-    const col = (label, a) => `<div class="ws-tn-col"><h4>${label}</h4><blockquote>${a.point ? esc(a.point) : '<i>no point sentence</i>'}</blockquote><small>${words(a.freewrite || '')} words of freewrite</small></div>`;
-    return `<div class="ws-tn">${col(`THEN ${mmddyy(then.t)}`, then)}${col('NOW', { point: b.point, freewrite: cur.freewrite })}</div>
+    const col = (label, a) => { const n = words(a.freewrite || ''); return `<div class="ws-tn-col"><h4>${label}</h4><blockquote>${a.point ? esc(a.point) : '<i>no point sentence</i>'}</blockquote><small>${n} word${n === 1 ? '' : 's'} of freewrite</small></div>`; };
+    const pick = prev.length > 1 ? `<p class="ws-cmp-pick">Compare with: ${prev.map((a, i) => `<button type="button" class="ws-step${a === then ? ' now' : ''}" data-cmp="${a.t}">${i === 0 ? 'first ' : i === prev.length - 1 ? 'last ' : ''}${mmddyy(a.t)}</button>`).join('')}</p>` : '';
+    return `${pick}<div class="ws-tn">${col(`THEN ${mmddyy(then.t)}`, then)}${col('NOW', { point: b.point, freewrite: cur.freewrite })}</div>
       <p class="ws-caption">${gap} day${gap === 1 ? '' : 's'} apart. <b>${pct}%</b> of your words overlap. ${pct < 20 ? 'You came at it from somewhere new.' : pct > 45 ? 'Same ground. Is the thinking the same too?' : 'Some old ground, some new.'}</p>
       <p class="ws-caption"><b>Only then:</b> ${only(A, B)}<br><b>Only now:</b> ${only(B, A)}</p>
       ${prev.length > 1 ? `<h3 class="subheading">EVERY TIME YOU ANSWERED</h3><ol class="ws-timeline">${prev.map((a) => `<li><b>${mmddyy(a.t)}</b> ${esc(a.point || '(no point)')}</li>`).join('')}<li><b>now</b> ${esc(b.point)}</li></ol>` : ''}
@@ -766,6 +767,7 @@
     const sh = t.closest('[data-shape]'); if (sh) { pickShape(sh.dataset.shape); return; }
     if (t.closest('[data-beat-add]')) { b.beats.push({ label: `Beat ${b.beats.length + 1}`, help: 'Give it one job.', note: '' }); persist(); renderBuild(); return; }
     const del = t.closest('[data-beat-del]'); if (del) { b.beats.splice(+del.dataset.beatDel, 1); persist(); renderBuild(); return; }
+    const cmp = t.closest('[data-cmp]'); if (cmp) { b.cmpWith = +cmp.dataset.cmp; persist(); renderBuild(); return; }
     const ot = t.closest('[data-open-tab]'); if (ot) { if (mode !== 'revise') setMode('revise'); $(`.ws-tabs [data-tab="${ot.dataset.openTab}"]`).click(); }
   }
   $('#ws-build').addEventListener('input', (e) => {
@@ -843,6 +845,7 @@
     sprint = { end: Date.now() + min * 60000, start: words(el.body.value), goal: +$('#ws-goal').value || 0, nobs: $('#ws-nobs').checked };
     setMode('draft');
     el.body.focus();
+    $('#ws-timer').textContent = `Sprint ${min}:00 | 0${sprint.goal ? `/${sprint.goal}` : ''} words`;
     sprint.timer = setInterval(() => {
       const left = Math.max(0, sprint.end - Date.now()), done = words(el.body.value) - sprint.start;
       $('#ws-timer').textContent = `Sprint ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')} | ${done}${sprint.goal ? `/${sprint.goal}` : ''} words`;
