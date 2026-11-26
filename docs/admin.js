@@ -966,7 +966,15 @@
     $('#ws-publish').showModal();
   }
   const q = (s) => `"${s.replace(/[\r\n]+/g, ' ').trim().replace(/"/g, '\\"')}"`;
+  let publishing = false;
+  function setPublishing(busy) {
+    publishing = busy;
+    $$('#ws-publish [data-close]').forEach((button) => { button.disabled = busy; });
+  }
+  $('#ws-publish').addEventListener('cancel', (event) => { if (publishing) event.preventDefault(); });
   async function publish() {
+    if (publishing) return;
+    setPublishing(true);
     const status = $('#ws-pub-status'), go = $('#ws-pub-go');
     go.disabled = true;
     const editing = !!cur.path;
@@ -1002,8 +1010,10 @@
       if (cur.build) { cur.build.slug = slug; cur.build.stage = 'publish'; recordAnswer(); renderBuild(); }
       persist(true); refresh();
       status.textContent = 'Saved to GitHub. Building the site (about a minute)...';
+      setPublishing(false);
       await waitForBuild(sha, slug, status);
     } catch (ex) {
+      setPublishing(false);
       status.textContent = `Not published: ${ex.message}`;
       go.disabled = false;
     }
