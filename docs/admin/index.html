@@ -13,11 +13,11 @@
 <meta name="theme-color" content="#000080">
 <link rel="alternate" type="application/rss+xml" title="Joseph Noblett: writing" href="/feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000080%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffff00%22/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/style.css?v=eb2619a22cf0">
+<link rel="stylesheet" href="/style.css?v=2605ec8b48af">
 <script src="/site.js?v=5dda8e1f30e4" defer></script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<script src="/admin.js?v=6e65e973ce02" defer></script>
+<script src="/admin.js?v=1973038a4f02" defer></script>
 <noscript><style>html.dialing-in main { animation: none; }</style></noscript>
 </head>
 <body>
@@ -83,6 +83,7 @@
   <div class="ws-toolbar" role="toolbar" aria-label="Writer's Station">
     <button type="button" class="tbtn" data-act="new"><span aria-hidden="true">+</span>New</button>
     <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Open</button>
+    <button type="button" class="tbtn" data-act="journal"><span aria-hidden="true">&amp;</span>Journal</button>
     <button type="button" class="tbtn" data-act="save"><span aria-hidden="true">v</span>Save</button>
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn ws-mode" data-mode="draft" aria-pressed="true"><span aria-hidden="true">~</span>Draft</button>
@@ -104,6 +105,7 @@
         <label>One-line summary <input id="ws-desc" type="text" maxlength="200" placeholder="Shows in the list and in link previews"></label>
         <label class="ws-kind-label">Kind <input id="ws-kind" list="ws-kinds" placeholder="Essay"><datalist id="ws-kinds"></datalist></label>
       </div>
+      <div class="ws-build" id="ws-build" hidden></div>
       <div class="ws-format" role="toolbar" aria-label="Formatting">
         <button type="button" data-fmt="h2" title="Heading">H2</button><button type="button" data-fmt="b" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-fmt="i" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-fmt="q" title="Quote">&gt;</button><button type="button" data-fmt="ul" title="List">*</button><button type="button" data-fmt="link" title="Link (Ctrl+K)">link</button><button type="button" data-fmt="code" title="Code">`c`</button>
         <span class="ws-hint" id="ws-hint">Draft mode: just write. Checks wait for Revise.</span>
@@ -130,10 +132,12 @@
   <div class="ws-bottom">
     <section class="panel ws-log"><div class="section-bar"><span>Writing Log</span><span>this computer only</span></div><div class="panel-body" id="ws-log"></div></section>
     <section class="panel ws-tips"><div class="section-bar"><span>Rules of the House</span></div><div class="panel-body"><ol>
+      <li><b>Climb, don't leap.</b> Prompt, freewrite, one-sentence point, plan, draft. New shows the steps.</li>
       <li><b>Drafting and revising are different jobs.</b> Draft mode hides every check so you can get it down.</li>
       <li><b>Short, regular sessions beat binges.</b> A 15-30 min sprint, most days.</li>
       <li><b>Freewrite when stuck.</b> Turn on "no backspace" and keep the pen moving.</li>
       <li><b>Revise big before small.</b> Check the Outline first, then the sentences.</li>
+      <li><b>Revisit old prompts.</b> Same question, months apart. The Journal shows how your thinking moved.</li>
       <li><b>Read it out loud.</b> Your ear catches what your eye skips.</li>
       <li><b>Orwell:</b> short words, cut what you can, active voice, no worn-out phrases. Break any rule before writing something ugly.</li>
     </ol></div></section>
@@ -144,6 +148,12 @@
 <dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Open</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
   <div class="ws-dialog-body"><h3 class="subheading">DRAFTS ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
   <h3 class="subheading">PUBLISHED (EDIT LIVE)</h3><ul class="ws-list" id="ws-open-posts"><li>Loading...</li></ul></div></dialog>
+
+<dialog class="ws-dialog ws-dialog-wide" id="ws-new"><div class="dialog-title"><span>Start Something New</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body" id="ws-new-body"></div></dialog>
+
+<dialog class="ws-dialog ws-dialog-wide" id="ws-journal"><div class="dialog-title"><span>Prompt Journal</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body" id="ws-journal-body"></div></dialog>
 
 <dialog class="ws-dialog" id="ws-sprint"><div class="dialog-title"><span>Writing Sprint</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
   <div class="ws-dialog-body"><p>Pick a length. Write until the bell. Don't edit.</p>

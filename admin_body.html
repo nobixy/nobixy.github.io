@@ -26,6 +26,7 @@
   <div class="ws-toolbar" role="toolbar" aria-label="Writer's Station">
     <button type="button" class="tbtn" data-act="new"><span aria-hidden="true">+</span>New</button>
     <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Open</button>
+    <button type="button" class="tbtn" data-act="journal"><span aria-hidden="true">&amp;</span>Journal</button>
     <button type="button" class="tbtn" data-act="save"><span aria-hidden="true">v</span>Save</button>
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn ws-mode" data-mode="draft" aria-pressed="true"><span aria-hidden="true">~</span>Draft</button>
@@ -47,6 +48,7 @@
         <label>One-line summary <input id="ws-desc" type="text" maxlength="200" placeholder="Shows in the list and in link previews"></label>
         <label class="ws-kind-label">Kind <input id="ws-kind" list="ws-kinds" placeholder="Essay"><datalist id="ws-kinds"></datalist></label>
       </div>
+      <div class="ws-build" id="ws-build" hidden></div>
       <div class="ws-format" role="toolbar" aria-label="Formatting">
         <button type="button" data-fmt="h2" title="Heading">H2</button><button type="button" data-fmt="b" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-fmt="i" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-fmt="q" title="Quote">&gt;</button><button type="button" data-fmt="ul" title="List">*</button><button type="button" data-fmt="link" title="Link (Ctrl+K)">link</button><button type="button" data-fmt="code" title="Code">`c`</button>
         <span class="ws-hint" id="ws-hint">Draft mode: just write. Checks wait for Revise.</span>
@@ -73,10 +75,12 @@
   <div class="ws-bottom">
     <section class="panel ws-log"><div class="section-bar"><span>Writing Log</span><span>this computer only</span></div><div class="panel-body" id="ws-log"></div></section>
     <section class="panel ws-tips"><div class="section-bar"><span>Rules of the House</span></div><div class="panel-body"><ol>
+      <li><b>Climb, don't leap.</b> Prompt, freewrite, one-sentence point, plan, draft. New shows the steps.</li>
       <li><b>Drafting and revising are different jobs.</b> Draft mode hides every check so you can get it down.</li>
       <li><b>Short, regular sessions beat binges.</b> A 15-30 min sprint, most days.</li>
       <li><b>Freewrite when stuck.</b> Turn on "no backspace" and keep the pen moving.</li>
       <li><b>Revise big before small.</b> Check the Outline first, then the sentences.</li>
+      <li><b>Revisit old prompts.</b> Same question, months apart. The Journal shows how your thinking moved.</li>
       <li><b>Read it out loud.</b> Your ear catches what your eye skips.</li>
       <li><b>Orwell:</b> short words, cut what you can, active voice, no worn-out phrases. Break any rule before writing something ugly.</li>
     </ol></div></section>
@@ -87,6 +91,12 @@
 <dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Open</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
   <div class="ws-dialog-body"><h3 class="subheading">DRAFTS ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
   <h3 class="subheading">PUBLISHED (EDIT LIVE)</h3><ul class="ws-list" id="ws-open-posts"><li>Loading...</li></ul></div></dialog>
+
+<dialog class="ws-dialog ws-dialog-wide" id="ws-new"><div class="dialog-title"><span>Start Something New</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body" id="ws-new-body"></div></dialog>
+
+<dialog class="ws-dialog ws-dialog-wide" id="ws-journal"><div class="dialog-title"><span>Prompt Journal</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body" id="ws-journal-body"></div></dialog>
 
 <dialog class="ws-dialog" id="ws-sprint"><div class="dialog-title"><span>Writing Sprint</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
   <div class="ws-dialog-body"><p>Pick a length. Write until the bell. Don't edit.</p>
