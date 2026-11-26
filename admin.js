@@ -629,10 +629,12 @@
     const b = cur.build, out = [];
     const then = b.revisit && b.openThen && prevAnswers(b).at(-1);
     if (then && then.point) out.push(`> On ${mmddyy(then.t)} I wrote: "${then.point}"`);
-    for (const x of b.beats) out.push(`TK ${x.label}: ${x.note.trim() || x.help}`);
+    for (const x of b.beats) out.push(beatLine(x));
+    b.placed = b.beats.map((x) => x.label);
     return `${out.join('\n\n')}\n`;
   }
 
+  const beatLine = (x) => `TK ${x.label}: ${x.note.trim() || x.help}`;
   function setStage(s) {
     const b = cur && cur.build; if (!b) return;
     if (s === 'publish') { publishDialog(); return; }
@@ -641,6 +643,11 @@
     if (s === 'draft' && !cur.body.trim()) {
       cur.body = b.beats.length ? draftFromPlan() : cur.freewrite || '';
       if (b.shape && !el.kind.value.trim()) el.kind.value = SHAPES[b.shape].kind;
+    } else if (s === 'draft' && b.beats.length) {
+      // Back from Plan with a draft already going: add only the beats that never made it into the draft.
+      const placed = new Set(b.placed || b.beats.filter((x) => cur.body.includes(`TK ${x.label}`)).map((x) => x.label));
+      const fresh = b.beats.filter((x) => !placed.has(x.label));
+      if (fresh.length) { cur.body = `${cur.body.replace(/\s+$/, '')}\n\n${fresh.map(beatLine).join('\n\n')}\n`; b.placed = [...placed, ...fresh.map((x) => x.label)]; say(`Added ${fresh.length} new beat${fresh.length > 1 ? 's' : ''} to the end of your draft.`); }
     }
     b.stage = s;
     if (s === 'plan' && !b.shape && b.revisit) pickShape('reflect', false);
@@ -714,7 +721,7 @@
       case 'plan': return `${why('plan')}${pointLine(b)}
         <div class="ws-shapes">${Object.entries(SHAPES).map(([k, s]) => `<button type="button" class="ws-shape" data-shape="${k}" aria-pressed="${b.shape === k}">${s.name}<small>${s.what}</small></button>`).join('')}</div>
         ${b.beats.length ? `<ol class="ws-beats">${b.beats.map((x, i) => `<li><label><span>${i + 1}. ${esc(x.label)} <small>${esc(x.help)}</small></span><input data-beat="${i}" maxlength="240" value="${esc(x.note)}" placeholder="What goes here? A few words."></label><button type="button" class="ws-ignore" data-beat-del="${i}" title="Remove this beat">X</button></li>`).join('')}</ol>
-        <p class="ws-choices"><button type="button" class="dlg-btn" data-beat-add>+ Add a beat</button><button type="button" class="dlg-btn" data-stage-go="draft">Build the draft from this plan -&gt;</button></p>` : '<p class="ws-note">Pick a shape. You can change every beat after.</p>'}`;
+        <p class="ws-choices"><button type="button" class="dlg-btn" data-beat-add>+ Add a beat</button><button type="button" class="dlg-btn" data-stage-go="draft">${cur.body.trim() ? 'Back to the draft (adds any new beats) -&gt;' : 'Build the draft from this plan -&gt;'}</button></p>` : '<p class="ws-note">Pick a shape. You can change every beat after.</p>'}`;
       case 'draft': return `${why('draft')}${pointLine(b)}
         ${b.beats.length ? `<ul class="ws-beatlist" id="ws-beatlist">${beatItems()}</ul>` : ''}
         <details class="ws-peek"><summary>Peek at your freewrite</summary><div class="ws-fw">${esc(cur.freewrite || '')}</div></details>
