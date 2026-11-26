@@ -23,6 +23,7 @@ jobs:
           python-version: "3.13"
       - run: pip install "markdown>=3.6,<4"
       - run: python -m unittest -q test_safe_markdown
+      - run: node --test test_admin_core.cjs
       - run: python build.py
       - uses: actions/upload-pages-artifact@v5
         with:

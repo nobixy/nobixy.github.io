@@ -24,7 +24,7 @@ from safe_markdown import render
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs"
 STYLE_VERSION = hashlib.sha256((ROOT / "style.css").read_bytes()).hexdigest()[:12]
-ADMIN_VERSION = hashlib.sha256((ROOT / "admin.js").read_bytes()).hexdigest()[:12]
+ADMIN_VERSION = hashlib.sha256((ROOT / "admin.js").read_bytes() + (ROOT / "admin-core.js").read_bytes()).hexdigest()[:12]
 # The Writer's Station (/admin/) is a static shell: nothing secret lives in it. Saving and publishing need a
 # GitHub token only Joseph holds, and GitHub checks it on every request. This policy keeps the page to
 # its own scripts and the GitHub API, so nothing else on the page can ever see that token.
@@ -492,6 +492,7 @@ def build() -> None:
     shutil.copy(ROOT / "style.css", OUT / "style.css")
     shutil.copy(ROOT / "site.js", OUT / "site.js")
     shutil.copy(ROOT / "admin.js", OUT / "admin.js")
+    shutil.copy(ROOT / "admin-core.js", OUT / "admin-core.js")
     shutil.copy(ROOT / "avatar.jpg", OUT / "avatar.jpg")
     write("index.html", page(data["profile"]["name"], resume_html(data, posts), data, page_class="home-page", posts=posts))
     write("writing/index.html", page("Writing", writing_hub(posts, settings), data, path="/writing/", page_class="archive-page",
@@ -515,7 +516,7 @@ def build() -> None:
 <aside class="article-aside" aria-label="More writing"><div class="panel"><div class="panel-top"><span>More Writing</span><span aria-hidden="true"></span></div><div class="panel-body"><p class="eyebrow">Read these next:</p>{related}</div></div>{ring}<div class="aside-note">* MADE ON THE INTERNET, WITH CARE.</div></aside></div>'''
         write(f'{p["slug"]}/index.html', page(p["title"], body, data, description=p["description"], path=f'/{p["slug"]}/', page_class="article-page", posts=posts))
     head = (f'<meta http-equiv="Content-Security-Policy" content="{ADMIN_CSP}">\n'
-            f'<meta name="referrer" content="no-referrer">\n<script src="/admin.js?v={ADMIN_VERSION}" defer></script>')
+            f'<meta name="referrer" content="no-referrer">\n<script src="/admin-core.js?v={ADMIN_VERSION}" defer></script><script src="/admin.js?v={ADMIN_VERSION}" defer></script>')
     write("admin/index.html", page("Writer's Station", (ROOT / "admin_body.html").read_text(encoding="utf-8"), data,
                                    path="/admin/", page_class="admin-page", description="Private writing desk.",
                                    posts=posts, noindex=True, head_extra=head))

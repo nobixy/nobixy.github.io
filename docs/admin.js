@@ -16,7 +16,7 @@
   const $$ = (sel) => [...document.querySelectorAll(sel)];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  const words = (s) => (s.match(/[A-Za-z0-9'-]+/g) || []).length;
+  const { words, draftLabel, draftStatus, findDrafts, markdownExport } = window.WriterCore;
   const slugify = (t) => t.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
   const store = { get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set: (k, v) => localStorage.setItem(k, JSON.stringify(v)) };
@@ -72,7 +72,7 @@
   let drafts = store.get('ws.drafts', {});
   let cur = null;
   let kindsMap = {};
-  const newDraft = () => ({ id: `d${Date.now().toString(36)}`, title: '', desc: '', kind: '', body: '', created: Date.now(), updated: Date.now(), snapshots: [], revised: false, readAloud: false });
+  const newDraft = () => ({ id: `d${crypto.randomUUID()}`, title: '', desc: '', kind: '', body: '', created: Date.now(), updated: Date.now(), snapshots: [], revised: false, readAloud: false });
 
   function load(d) {
     cur = d;
@@ -819,18 +819,14 @@
       ${ps.length ? ps.map((p) => { const d = dueAt(p); return `<section class="ws-jentry"><h4>${esc(p.text)}</h4>
         <p class="ws-note">${p.answers.length} answer${p.answers.length > 1 ? 's' : ''}. ${d <= Date.now() ? '<b>Due for a revisit.</b>' : `Comes back ${mmddyy(d)}.`} <button type="button" class="ws-linkbtn" data-start-prompt="${p.id}">Revisit now</button></p>
         <ol class="ws-timeline">${p.answers.slice().sort((x, y) => x.t - y.t).map((a) => `<li><b>${mmddyy(a.t)}</b> ${a.point ? `<q>${esc(a.point)}</q>` : '<i>no point sentence</i>'}${a.slug ? ` <a href="/${esc(a.slug)}/" target="_blank" rel="noopener">became /${esc(a.slug)}/</a>` : ''}${a.reflect ? `<br><small>What changed: ${esc(a.reflect)}</small>` : ''}
-          <details><summary>freewrite (${words(a.freewrite || '')} words)</summary><div class="ws-fw">${esc(a.freewrite || '')}</div></details></li>`).join('')}</ol></section>`; }).join('')
+          ${drafts[a.draftId] ? `<button type="button" class="ws-linkbtn" data-open-draft="${esc(a.draftId)}">Resume this piece</button>` : ''}<details><summary>freewrite (${words(a.freewrite || '')} words)</summary><div class="ws-fw">${esc(a.freewrite || '')}</div></details></li>`).join('')}</ol></section>`; }).join('')
         : '<p class="ws-empty">No answers yet. New -&gt; pick a prompt.</p>'}`;
   }
 
   function exportBackup() {
     persist();
     const data = { v: 1, exported: new Date().toISOString(), drafts, prompts: saved, log: store.get('ws.log', {}) };
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    a.download = `writers-station-${today()}.json`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    downloadText(JSON.stringify(data, null, 2), 'application/json', `writers-station-${today()}.json`);
     say('Backup saved to your downloads. Keep it somewhere private: it has your drafts.');
   }
   async function importBackup(file) {
@@ -905,15 +901,36 @@
   const FMT = { h2: () => linePrefix('## '), b: () => wrap('**'), i: () => wrap('*'), q: () => linePrefix('> '), ul: () => linePrefix('- '), code: () => wrap('`', '`', 'code'), link: () => wrap('[', '](https://)', 'link text') };
 
   // ------------------------------------------------------------------ open
+  function renderLibrary() {
+    const list = findDrafts(Object.values(drafts), $('#ws-library-search').value, $('#ws-library-filter').value);
+    $('#ws-library-count').textContent = `${list.length} piece${list.length === 1 ? '' : 's'}`;
+    $('#ws-open-drafts').innerHTML = list.map((d) => `<li><span><b>${esc(draftLabel(d))}</b><small>${words(d.body || d.freewrite || '')} words · ${esc(draftStatus(d))} · ${ago(d.updated)}</small>${d.next ? `<small>Next: ${esc(d.next)}</small>` : ''}</span><span class="ws-library-actions"><button type="button" class="dlg-btn" data-open-draft="${esc(d.id)}">Resume</button><button type="button" class="dlg-btn" data-del-draft="${esc(d.id)}" aria-label="Delete ${esc(draftLabel(d))}">Delete</button></span></li>`).join('') || '<li>No pieces match. Try another search or filter.</li>';
+  }
   async function openDialog() {
+    persist();
     const dlg = $('#ws-open');
-    const list = Object.values(drafts).sort((a, b) => b.updated - a.updated);
-    $('#ws-open-drafts').innerHTML = list.map((d) => `<li><span><b>${esc(d.title || 'Untitled')}</b> <small>${words(d.body)} words, ${ago(d.updated)}${d.path ? ', published' : ''}${d.build ? (d.build.stage === 'kept' ? ', journal entry' : `, step: ${(STAGE_INFO[d.build.stage] || ['done'])[0].toLowerCase()}`) : ''}</small></span><span><button type="button" class="dlg-btn" data-open-draft="${d.id}">Open</button><button type="button" class="dlg-btn" data-del-draft="${d.id}">Delete</button></span></li>`).join('') || '<li>No drafts yet.</li>';
-    dlg.showModal();
+    renderLibrary();
+    if (!dlg.open) dlg.showModal();
+    $('#ws-library-search').focus();
+    $('#ws-open-posts').innerHTML = '<li>Loading...</li>';
     try {
       const files = (await gh(`/repos/${REPO}/contents/posts?ref=main`)).filter((f) => f.name.endsWith('.md')).sort((a, b) => b.name.localeCompare(a.name));
-      $('#ws-open-posts').innerHTML = files.map((f) => `<li><span>${esc(f.name.replace(/\.md$/, ''))}</span><button type="button" class="dlg-btn" data-open-post="${esc(f.path)}">Edit</button></li>`).join('');
+      $('#ws-open-posts').innerHTML = files.map((f) => `<li><span>${esc(f.name.replace(/\.md$/, ''))}</span><button type="button" class="dlg-btn" data-open-post="${esc(f.path)}">Edit</button></li>`).join('') || '<li>No published pieces yet.</li>';
     } catch (ex) { $('#ws-open-posts').innerHTML = `<li>Couldn't list posts: ${esc(ex.message)}</li>`; }
+  }
+  $('#ws-library-search').addEventListener('input', renderLibrary);
+  $('#ws-library-filter').addEventListener('change', renderLibrary);
+  function downloadText(text, type, filename) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  function exportPiece() {
+    persist();
+    downloadText(markdownExport(cur), 'text/markdown;charset=utf-8', `${slugify(draftLabel(cur)) || 'writing'}.md`);
+    say('Markdown downloaded, including your freewrite and working notes.');
   }
   function frontMatter(text) {
     const m = text.match(/^---\n([\s\S]*?)\n---\n/);
@@ -1080,6 +1097,7 @@
       if (a === 'new') { renderNew(); $('#ws-new').showModal(); }
       else if (a === 'journal') { renderJournal(); $('#ws-journal').showModal(); }
       else if (a === 'open') openDialog();
+      else if (a === 'export-piece') exportPiece();
       else if (a === 'save') { persist(true); say('Saved on this computer. It goes public only when you Publish.'); }
       else if (a === 'sprint') $('#ws-sprint').showModal();
       else if (a === 'aloud') readAloud();
@@ -1124,11 +1142,11 @@
     const t = e.target instanceof Element ? e.target : null; if (!t) return;
     if (t.closest('[data-close]')) t.closest('dialog').close();
     const sp = t.closest('[data-sprint]'); if (sp) { $('#ws-sprint').close(); startSprint(+sp.dataset.sprint); }
-    const od = t.closest('[data-open-draft]'); if (od) { persist(); load(drafts[od.dataset.openDraft]); $('#ws-open').close(); }
+    const od = t.closest('[data-open-draft]'); if (od) { persist(); load(drafts[od.dataset.openDraft]); $('#ws-open').close(); $('#ws-journal').close(); say('Resumed where you left off.'); }
     const op = t.closest('[data-open-post]'); if (op) openPost(op.dataset.openPost).catch((ex) => say(`Couldn't open: ${ex.message}`));
     const dd = t.closest('[data-del-draft]');
     if (dd) {
-      if (dd.dataset.armed) { delete drafts[dd.dataset.delDraft]; store.set('ws.drafts', drafts); if (cur && cur.id === dd.dataset.delDraft) load(newDraft()); dd.closest('li').remove(); }
+      if (dd.dataset.armed) { delete drafts[dd.dataset.delDraft]; store.set('ws.drafts', drafts); if (cur && cur.id === dd.dataset.delDraft) load(newDraft()); renderLibrary(); }
       else { dd.dataset.armed = '1'; dd.textContent = 'Sure?'; }
     }
     if (t.closest('#ws-pub-go')) publish();
@@ -1149,5 +1167,6 @@
     if (e.target.id !== 'ws-import' || !e.target.files[0]) return;
     importBackup(e.target.files[0]).catch((ex) => say(`Couldn't import: ${ex.message}`)).finally(() => { e.target.value = ''; });
   });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
   window.addEventListener('beforeunload', () => persist());
 })();

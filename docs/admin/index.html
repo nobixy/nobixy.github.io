@@ -13,11 +13,11 @@
 <meta name="theme-color" content="#000080">
 <link rel="alternate" type="application/rss+xml" title="Joseph Noblett: writing" href="/feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23000080%22/%3E%3Cpath d=%22M16 3l2.6 9.4L28 15l-9.4 2.6L16 27l-2.6-9.4L4 15l9.4-2.6z%22 fill=%22%23ffff00%22/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/style.css?v=3c01b3ac3bb9">
+<link rel="stylesheet" href="/style.css?v=4cdf9cd55404">
 <script src="/site.js?v=5dda8e1f30e4" defer></script>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<script src="/admin.js?v=2e1f59bd03a3" defer></script>
+<script src="/admin-core.js?v=db9da8d74d04" defer></script><script src="/admin.js?v=db9da8d74d04" defer></script>
 <noscript><style>html.dialing-in main { animation: none; }</style></noscript>
 </head>
 <body>
@@ -82,9 +82,10 @@
 <div class="ws" id="ws" hidden>
   <div class="ws-toolbar" role="toolbar" aria-label="Writer's Station">
     <button type="button" class="tbtn" data-act="new"><span aria-hidden="true">+</span>New</button>
-    <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Open</button>
+    <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Library</button>
     <button type="button" class="tbtn" data-act="journal"><span aria-hidden="true">&amp;</span>Journal</button>
     <button type="button" class="tbtn" data-act="save"><span aria-hidden="true">v</span>Save</button>
+    <button type="button" class="tbtn" data-act="export-piece"><span aria-hidden="true">v</span>Export</button>
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn ws-mode" data-mode="draft" aria-pressed="true"><span aria-hidden="true">~</span>Draft</button>
     <button type="button" class="tbtn ws-mode" data-mode="revise" aria-pressed="false"><span aria-hidden="true">?</span>Revise</button>
@@ -145,8 +146,8 @@
   <div class="ws-statusbar" role="status"><span id="ws-count">0 words</span><span id="ws-read">0 min read</span><span id="ws-session">+0 this session</span><span id="ws-timer">no sprint</span><span id="ws-msg" class="ws-msg">Ready.</span></div>
 </div>
 
-<dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Open</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
-  <div class="ws-dialog-body"><h3 class="subheading">DRAFTS ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
+<dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Your Writing Library</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body"><div class="ws-library-tools"><label for="ws-library-search">Find your writing</label><input id="ws-library-search" type="search" placeholder="Search titles, prompts, notes, or any words..."><label for="ws-library-filter">Show</label><select id="ws-library-filter"><option value="all">All writing</option><option value="drafts">Drafts in progress</option><option value="journal">Journal entries</option><option value="published">Published pieces</option></select></div><p id="ws-library-count" role="status"></p><h3 class="subheading">ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
   <h3 class="subheading">PUBLISHED (EDIT LIVE)</h3><ul class="ws-list" id="ws-open-posts"><li>Loading...</li></ul></div></dialog>
 
 <dialog class="ws-dialog ws-dialog-wide" id="ws-new"><div class="dialog-title"><span>Start Something New</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>

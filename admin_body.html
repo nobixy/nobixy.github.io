@@ -25,9 +25,10 @@
 <div class="ws" id="ws" hidden>
   <div class="ws-toolbar" role="toolbar" aria-label="Writer's Station">
     <button type="button" class="tbtn" data-act="new"><span aria-hidden="true">+</span>New</button>
-    <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Open</button>
+    <button type="button" class="tbtn" data-act="open"><span aria-hidden="true">=</span>Library</button>
     <button type="button" class="tbtn" data-act="journal"><span aria-hidden="true">&amp;</span>Journal</button>
     <button type="button" class="tbtn" data-act="save"><span aria-hidden="true">v</span>Save</button>
+    <button type="button" class="tbtn" data-act="export-piece"><span aria-hidden="true">v</span>Export</button>
     <span class="ws-sep" aria-hidden="true"></span>
     <button type="button" class="tbtn ws-mode" data-mode="draft" aria-pressed="true"><span aria-hidden="true">~</span>Draft</button>
     <button type="button" class="tbtn ws-mode" data-mode="revise" aria-pressed="false"><span aria-hidden="true">?</span>Revise</button>
@@ -88,8 +89,8 @@
   <div class="ws-statusbar" role="status"><span id="ws-count">0 words</span><span id="ws-read">0 min read</span><span id="ws-session">+0 this session</span><span id="ws-timer">no sprint</span><span id="ws-msg" class="ws-msg">Ready.</span></div>
 </div>
 
-<dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Open</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
-  <div class="ws-dialog-body"><h3 class="subheading">DRAFTS ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
+<dialog class="ws-dialog" id="ws-open"><div class="dialog-title"><span>Your Writing Library</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>
+  <div class="ws-dialog-body"><div class="ws-library-tools"><label for="ws-library-search">Find your writing</label><input id="ws-library-search" type="search" placeholder="Search titles, prompts, notes, or any words…"><label for="ws-library-filter">Show</label><select id="ws-library-filter"><option value="all">All writing</option><option value="drafts">Drafts in progress</option><option value="journal">Journal entries</option><option value="published">Published pieces</option></select></div><p id="ws-library-count" role="status"></p><h3 class="subheading">ON THIS COMPUTER</h3><ul class="ws-list" id="ws-open-drafts"></ul>
   <h3 class="subheading">PUBLISHED (EDIT LIVE)</h3><ul class="ws-list" id="ws-open-posts"><li>Loading...</li></ul></div></dialog>
 
 <dialog class="ws-dialog ws-dialog-wide" id="ws-new"><div class="dialog-title"><span>Start Something New</span><button type="button" class="ws-x" data-close aria-label="Close">X</button></div>

@@ -698,3 +698,10 @@ a.focus-where { color: var(--link); }
 #ws-body[readonly] { background: #f8f8f0; }
 @media (max-width: 930px) { .ws-tn { grid-template-columns: 1fr; } }
 .ws-cmp-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin: 0 0 6px; font: bold 12px var(--chrome-font); }
+
+/* A library for unfinished pieces as well as published work. */
+.ws-library-tools { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.ws-library-tools input, .ws-library-tools select { min-width: 0; width: 100%; padding: 8px; font: inherit; }
+.ws-library-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+#ws-open-drafts > li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+#ws-open-drafts small { display: block; margin-top: 4px; }
