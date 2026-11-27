@@ -720,3 +720,5 @@ a.focus-where { color: var(--link); }
 .ws-focused #ws-body { min-height: 75vh; }
 .ws-focused .ws-statusbar { max-width: 850px; margin: 0 auto; }
 .ws-brief :focus-visible, .ws-tabs :focus-visible, #ws-body:focus-visible { outline: 2px solid #006600; outline-offset: 2px; }
+
+.ws-storage-error { margin: 8px; padding: 12px; border: 2px solid #990000; background: #fff1d6; color: #660000; font: 15px/1.5 var(--body-font); }

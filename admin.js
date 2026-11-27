@@ -80,13 +80,13 @@
     el.title.value = d.title; el.desc.value = d.desc; el.kind.value = d.kind;
     bindField();
     syncCompass();
-    store.set('ws.current', d.id);
+    try { store.set('ws.current', d.id); } catch { storageWarning(); }
     renderBuild();
     setMode(d.build && d.build.stage === 'revise' ? 'revise' : 'draft');
     refresh();
   }
   function persist(snapshot = false) {
-    if (!cur) return;
+    if (!cur) return true;
     Object.assign(cur, { title: el.title.value, desc: el.desc.value, kind: el.kind.value, [field()]: el.body.value, updated: Date.now() });
     const last = cur.snapshots[cur.snapshots.length - 1];
     if ((snapshot || !last || Date.now() - last.t > 5 * 60000) && cur.body.trim() && (!last || last.body !== cur.body)) {
@@ -97,8 +97,15 @@
     try {
       store.set('ws.drafts', drafts);
       if (cur.build && ((cur.freewrite || '').trim() || (cur.build.point || '').trim() || cur.build.answered)) recordAnswer();
-      $('#ws-saved').textContent = `saved ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`; }
-    catch { say('Browser storage is full: delete old drafts in Open.'); }
+      $('#ws-storage-error').hidden = true;
+      $('#ws-saved').textContent = `saved ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+      return true;
+    } catch { storageWarning(); return false; }
+  }
+  function storageWarning() {
+    $('#ws-saved').textContent = 'NOT SAVED';
+    $('#ws-storage-error').hidden = false;
+    say('Could not save on this computer. Export a backup before closing this page.');
   }
   const autosave = debounce(() => persist(), 700);
 
@@ -111,7 +118,7 @@
     if (delta > 0 && delta < 400) { // a paste of a whole piece isn't "writing"
       const log = store.get('ws.log', {});
       log[today()] = (log[today()] || 0) + delta;
-      store.set('ws.log', log);
+      try { store.set('ws.log', log); } catch { /* The writing itself is saved separately by persist. */ }
     }
     lastCount = n;
   }
@@ -1142,7 +1149,7 @@
   document.addEventListener('keydown', (e) => {
     if (ws.hidden || !(e.ctrlKey || e.metaKey)) return;
     const k = e.key.toLowerCase();
-    if (k === 's') { e.preventDefault(); persist(true); say('Saved on this computer.'); }
+    if (k === 's') { e.preventDefault(); if (persist(true)) say('Saved on this computer.'); }
     else if (k === 'b' && document.activeElement === el.body) { e.preventDefault(); FMT.b(); }
     else if (k === 'i' && document.activeElement === el.body) { e.preventDefault(); FMT.i(); }
     else if (k === 'k' && document.activeElement === el.body) { e.preventDefault(); FMT.link(); }
@@ -1156,7 +1163,7 @@
       else if (a === 'journal') { renderJournal(); $('#ws-journal').showModal(); }
       else if (a === 'open') openDialog();
       else if (a === 'export-piece') exportPiece();
-      else if (a === 'save') { persist(true); say('Saved on this computer. It goes public only when you Publish.'); }
+      else if (a === 'save') { if (persist(true)) say('Saved on this computer. It goes public only when you Publish.'); }
       else if (a === 'sprint') $('#ws-sprint').showModal();
       else if (a === 'aloud') readAloud();
       else if (a === 'focus') toggleFocus();
@@ -1225,5 +1232,6 @@
     importBackup(e.target.files[0]).catch((ex) => say(`Couldn't import: ${ex.message}`)).finally(() => { e.target.value = ''; });
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
-  window.addEventListener('beforeunload', () => persist());
+  ws.addEventListener('input', (e) => { if (e.target.closest('.ws-paper') && $('#ws-storage-error').hidden) $('#ws-saved').textContent = 'Saving…'; });
+  window.addEventListener('beforeunload', (e) => { if (!persist()) { e.preventDefault(); e.returnValue = ''; } });
 })();
